@@ -4,9 +4,22 @@ import { spawnSync } from 'node:child_process';
 import { Octokit } from '@octokit/rest';
 import type { ChangeEvent, PatchResult, SqliteSnapshotStore } from '@patch-dev/core';
 import type { ValidatedPatch } from '@patch-dev/fix';
+import {
+  describeMissingGithubAuth,
+  resolveGithubAuth,
+  type GithubAuthResult,
+} from './auth.js';
+import { prepareAndPushFixBranch } from './push.js';
+
+export {
+  resolveGithubAuth,
+  describeMissingGithubAuth,
+  type GithubAuthResult,
+} from './auth.js';
+export { prepareAndPushFixBranch } from './push.js';
 
 export interface GithubAppConfig {
-  /** GitHub App installation token or PAT for MVP. */
+  /** GitHub App installation token or PAT. */
   token: string;
   owner: string;
   repo: string;
@@ -82,13 +95,15 @@ export function renderDescription(params: {
  * Open a PR when confidence ≥ threshold, otherwise open an Issue.
  * Deduplicates via SnapshotStore change_event_links.
  *
- * Permissions required: contents (write), pull requests (write), metadata (read).
+ * App / token permissions: contents (write), pull requests (write), issues (write), metadata (read).
  */
 export async function publishResults(params: {
   event: ChangeEvent;
   results: ValidatedPatch[];
   config: GithubAppConfig;
   store: SqliteSnapshotStore;
+  /** Absolute path to the consumer repo (used to push a fix branch). */
+  repoRoot: string;
   headBranch?: string;
   baseBranch?: string;
 }): Promise<PublishResult> {
@@ -100,7 +115,7 @@ export async function publishResults(params: {
   }
 
   if (!config.token) {
-    return { kind: 'skipped', reason: 'no GITHUB_TOKEN / app token configured' };
+    return { kind: 'skipped', reason: describeMissingGithubAuth() };
   }
 
   const octokit = new Octokit({ auth: config.token });
@@ -114,13 +129,43 @@ export async function publishResults(params: {
     asIssue: !above,
   });
 
-  if (above && params.headBranch) {
+  if (above) {
+    const branchName =
+      params.headBranch ?? `patch/${event.id.slice(0, 8)}`;
+    const pushed = prepareAndPushFixBranch({
+      repoRoot: params.repoRoot,
+      results,
+      token: config.token,
+      owner: config.owner,
+      repo: config.repo,
+      branchName,
+      baseBranch: params.baseBranch,
+    });
+
+    if ('error' in pushed) {
+      // Fall back to Issue so the diagnosis is not lost
+      const issue = await octokit.issues.create({
+        owner: config.owner,
+        repo: config.repo,
+        title: `patch: fix ready but branch push failed — ${event.surface.path}`,
+        body: `${body}\n\n### Push error\n\n\`\`\`\n${pushed.error}\n\`\`\`\n`,
+        labels: ['patch', 'needs-review'],
+      });
+      store.putChangeEventLink(event.id, issue.data.html_url, 'issue');
+      return {
+        kind: 'issue',
+        url: issue.data.html_url,
+        number: issue.data.number,
+        reason: pushed.error,
+      };
+    }
+
     const title = `fix(${event.connector_id}): ${event.type} ${event.surface.path}`;
     const pr = await octokit.pulls.create({
       owner: config.owner,
       repo: config.repo,
       title,
-      head: params.headBranch,
+      head: pushed.branchName,
       base: params.baseBranch ?? 'main',
       body,
     });

@@ -23,6 +23,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@octokit/auth-app": "^7.1.4",
     "@octokit/rest": "^21.0.2",
     "@patch-dev/core": "workspace:*",
     "@patch-dev/fix": "workspace:*"

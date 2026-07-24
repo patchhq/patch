@@ -33,7 +33,7 @@ npx -y @patch-dev/cli scan --dry-run
 | Env | Purpose |
 |-----|---------|
 | `ANTHROPIC_API_KEY` | LLM classify/fix (heuristics without it) |
-| `GITHUB_TOKEN` or Patch GitHub App | Open PRs/Issues (else `.patch/reports/`) |
+| `GITHUB_TOKEN` or Patch GitHub App | Open PRs/Issues (else `.patch/reports/`) — [docs/github-app.md](./docs/github-app.md) |
 
 ## How it works
 
@@ -96,7 +96,9 @@ pnpm build
 pnpm test
 ```
 
-Publishing the CLI: [docs/publishing.md](./docs/publishing.md). Contributing: [CONTRIBUTING.md](./CONTRIBUTING.md).
+Publishing the CLI: [docs/publishing.md](./docs/publishing.md).  
+GitHub App (PRs/Issues): [docs/github-app.md](./docs/github-app.md).  
+Contributing: [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## Open source vs hosted
 

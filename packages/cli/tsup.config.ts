@@ -31,6 +31,7 @@ const workspaceAliases: Record<string, string> = {
 
 const external = [
   '@anthropic-ai/sdk',
+  '@octokit/auth-app',
   '@octokit/rest',
   'commander',
   'js-yaml',

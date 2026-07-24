@@ -52,11 +52,19 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
+      - name: Create GitHub App token
+        id: app-token
+        continue-on-error: true
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: \${{ secrets.PATCH_GITHUB_APP_ID }}
+          private-key: \${{ secrets.PATCH_GITHUB_APP_PRIVATE_KEY }}
       - run: npm install -g @patch-dev/cli@latest
       - name: Run patch scan
         env:
           ANTHROPIC_API_KEY: \${{ secrets.ANTHROPIC_API_KEY }}
-          GITHUB_TOKEN: \${{ secrets.GITHUB_TOKEN }}
+          # Prefer App token when the previous step succeeded; else workflow GITHUB_TOKEN
+          GITHUB_TOKEN: \${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
         run: patch scan
 `;
   writeFileSync(path, content, 'utf8');
@@ -174,9 +182,10 @@ export async function runInit(options: InitOptions): Promise<void> {
 
   const installUrl = readGithubAppInstallUrl();
   console.log();
-  console.log('Next step (required — GitHub App installs need a human):');
-  console.log(`  Install the Patch GitHub App: ${installUrl}`);
-  console.log();
-  console.log('Then either wait for the scheduled Action or run:');
-  console.log('  npx -y @patch-dev/cli scan');
+  console.log('Next steps:');
+  console.log(`  1. Install the Patch GitHub App on this repo: ${installUrl}`);
+  console.log('     (create the App once — see docs/github-app.md)');
+  console.log('  2. Add secrets: ANTHROPIC_API_KEY, PATCH_GITHUB_APP_ID, PATCH_GITHUB_APP_PRIVATE_KEY');
+  console.log('  3. Wait for the scheduled Action or run:');
+  console.log('       npx -y @patch-dev/cli scan');
 }

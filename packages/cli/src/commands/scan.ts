@@ -18,6 +18,8 @@ import {
   publishResults,
   resolveRepoSlug,
   writeLocalReport,
+  resolveGithubAuth,
+  describeMissingGithubAuth,
 } from '@patch-dev/github-app';
 import { ensureScannersRegistered, scanWithLanguages } from '../scanners.js';
 
@@ -202,20 +204,29 @@ export async function runScan(options: ScanOptions): Promise<void> {
         }
 
         const slug = resolveRepoSlug(options.cwd);
-        const token = process.env['GITHUB_TOKEN'] ?? process.env['GH_TOKEN'] ?? '';
-        if (!slug || !token) {
+        if (!slug) {
           const report = writeLocalReport(options.cwd, event, validated);
-          console.log(`  no GitHub credentials — local report: ${report}`);
+          console.log(`  no git remote / GITHUB_REPOSITORY — local report: ${report}`);
           continue;
         }
+
+        const auth = await resolveGithubAuth(slug);
+        if (!auth) {
+          const report = writeLocalReport(options.cwd, event, validated);
+          console.log(`  ${describeMissingGithubAuth()} — local report: ${report}`);
+          continue;
+        }
+
+        console.log(`  github auth: ${auth.source}`);
 
         const published = await publishResults({
           event,
           results: validated,
           store,
+          repoRoot: options.cwd,
           headBranch: validated[0]?.branchName,
           config: {
-            token,
+            token: auth.token,
             owner: slug.owner,
             repo: slug.repo,
             confidenceThreshold: config.confidence_threshold,

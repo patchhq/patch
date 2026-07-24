@@ -1,6 +1,6 @@
 {
   "name": "@patch-dev/cli",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Detect upstream API breaking changes and open PRs to fix your codebase",
   "license": "Apache-2.0",
   "type": "module",
@@ -50,6 +50,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
+    "@octokit/auth-app": "^7.1.4",
     "@octokit/rest": "^21.0.2",
     "commander": "^12.1.0",
     "js-yaml": "^4.1.0",

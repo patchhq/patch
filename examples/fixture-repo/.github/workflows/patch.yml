@@ -3,7 +3,6 @@ name: patch
 
 on:
   schedule:
-    # Daily at 14:00 UTC — APIs don't change hourly
     - cron: '0 14 * * *'
   workflow_dispatch:
 
@@ -19,9 +18,16 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - run: npm install -g patch@latest || npx --yes patch@latest --help
+      - name: Create GitHub App token
+        id: app-token
+        continue-on-error: true
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.PATCH_GITHUB_APP_ID }}
+          private-key: ${{ secrets.PATCH_GITHUB_APP_PRIVATE_KEY }}
+      - run: npm install -g @patch-dev/cli@latest
       - name: Run patch scan
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx patch scan
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
+        run: patch scan
