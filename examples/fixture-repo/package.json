@@ -1,0 +1,19 @@
+{
+  "name": "@fixture/repo",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "node --import tsx --test src/consumer.test.ts",
+    "lint": "echo ok"
+  },
+  "dependencies": {
+    "@fixture/fake-api-client": "workspace:*"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}

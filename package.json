@@ -1,0 +1,31 @@
+{
+  "name": "@patch-dev/monorepo",
+  "private": true,
+  "version": "0.1.1",
+  "description": "Detect upstream API breaking changes and open PRs to fix your codebase",
+  "license": "Apache-2.0",
+  "packageManager": "pnpm@9.15.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "clean": "turbo run clean",
+    "publish:cli": "pnpm --filter @patch-dev/cli publish:npm",
+    "pack:cli": "pnpm --filter @patch-dev/cli pack:npm",
+    "dogfood": "node examples/dogfood.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "eslint": "^9.16.0",
+    "prettier": "^3.4.2",
+    "turbo": "^2.3.3",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.18.0",
+    "vitest": "^2.1.8"
+  }
+}

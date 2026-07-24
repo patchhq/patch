@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "confidence_threshold": 0.7,
+  "snapshot_db": ".patch/snapshots.db",
+  "languages": ["typescript"],
+  "max_fix_attempts": 3,
+  "rules": [],
+  "disable_default_rules": [],
+  "connectors": [
+    {
+      "id": "fixture-fake-api",
+      "type": "package-diff",
+      "enabled": true,
+      "import_path": "@fixture/fake-api-client",
+      "options": {
+        "package": "@fixture/fake-api-client",
+        "registry": "npm",
+        "localPath": "../fake-api-client"
+      }
+    }
+  ]
+}

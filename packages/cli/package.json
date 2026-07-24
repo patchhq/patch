@@ -1,0 +1,76 @@
+{
+  "name": "@patch-dev/cli",
+  "version": "0.1.1",
+  "description": "Detect upstream API breaking changes and open PRs to fix your codebase",
+  "license": "Apache-2.0",
+  "type": "module",
+  "bin": {
+    "patch": "./dist/bin.js"
+  },
+  "main": "./dist/index.js",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
+  "keywords": [
+    "api",
+    "breaking-changes",
+    "openapi",
+    "typescript",
+    "codemod",
+    "github"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/patchhq/patch.git",
+    "directory": "packages/cli"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "lint": "eslint src",
+    "clean": "rm -rf dist",
+    "prepack": "node ./scripts/prepack.mjs",
+    "postpack": "node ./scripts/prepack.mjs restore",
+    "pack:npm": "pnpm build && pnpm pack",
+    "publish:npm": "pnpm build && pnpm publish --access public"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "@octokit/rest": "^21.0.2",
+    "commander": "^12.1.0",
+    "js-yaml": "^4.1.0",
+    "ts-morph": "^24.0.0",
+    "typescript": "^5.7.2",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@patch-dev/classify": "workspace:*",
+    "@patch-dev/connector-doc-scrape": "workspace:*",
+    "@patch-dev/connector-openapi-diff": "workspace:*",
+    "@patch-dev/connector-package-diff": "workspace:*",
+    "@patch-dev/core": "workspace:*",
+    "@patch-dev/fix": "workspace:*",
+    "@patch-dev/github-app": "workspace:*",
+    "@patch-dev/scanner-go": "workspace:*",
+    "@patch-dev/scanner-python": "workspace:*",
+    "@patch-dev/scanner-rust": "workspace:*",
+    "@patch-dev/scanner-ts": "workspace:*",
+    "@types/js-yaml": "^4.0.9",
+    "tsup": "^8.3.5",
+    "vitest": "^2.1.8"
+  }
+}

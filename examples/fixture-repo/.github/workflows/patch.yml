@@ -1,0 +1,27 @@
+# Patch: scheduled upstream API change scan
+name: patch
+
+on:
+  schedule:
+    # Daily at 14:00 UTC — APIs don't change hourly
+    - cron: '0 14 * * *'
+  workflow_dispatch:
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm install -g patch@latest || npx --yes patch@latest --help
+      - name: Run patch scan
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx patch scan

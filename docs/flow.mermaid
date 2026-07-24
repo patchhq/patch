@@ -1,0 +1,26 @@
+flowchart TD
+    subgraph UF[User Flow]
+        A[Run npx -y @patch-dev/cli init] --> B[Patch scans package.json for known API deps]
+        B --> C[User confirms detected connectors]
+        C --> D[Writes config, rules, scaffolds GitHub Action, installs GitHub App]
+        D --> E[No further manual steps]
+    end
+
+    subgraph TF[Scheduled Run: Technical Flow]
+        F[GitHub Action triggers patch scan] --> G[Connector fetches latest API source]
+        G --> H[Diff against stored snapshot]
+        H -->|New change found| I[Classify: Claude produces ChangeEvent]
+        I --> J[Map to FixInstruction: import path + symbol]
+        J --> K[LanguageScanner finds matching call sites]
+        K --> L[Fix agent proposes patch + optional read_file]
+        L --> M[Apply in worktree: type-check then tests]
+        M -->|Failed and attempts under 3| L2[Revise with exact error output]
+        L2 --> M
+        M -->|Passed or 3 attempts exhausted| N{Confidence above threshold?}
+        N -->|Yes| O[Open PR with explanation, source link, confidence]
+        N -->|No| P[Open Issue instead]
+        P --> Q[Update stored snapshot]
+        O --> Q
+    end
+
+    E -.runs on schedule.-> F

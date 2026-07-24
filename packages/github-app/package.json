@@ -1,0 +1,34 @@
+{
+  "name": "@patch-dev/github-app",
+  "version": "0.1.0",
+  "description": "Probot/Octokit PR bot for Patch",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "lint": "eslint src",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@octokit/rest": "^21.0.2",
+    "@patch-dev/core": "workspace:*",
+    "@patch-dev/fix": "workspace:*"
+  },
+  "devDependencies": {
+    "vitest": "^2.1.8"
+  },
+  "private": true
+}
