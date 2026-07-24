@@ -1,13 +1,39 @@
 # Patch
 
-Detect upstream API breaking changes and open pull requests that fix your TypeScript/JavaScript codebase.
+**Detect upstream API breaking changes and open PRs that fix your TypeScript/JavaScript codebase.**
+
+[![npm](https://img.shields.io/npm/v/@patch-dev/cli.svg)](https://www.npmjs.com/package/@patch-dev/cli)
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](./LICENSE)
 
 ```bash
 npx -y @patch-dev/cli init
-# confirm connectors → writes patch.config.json, scaffolds GitHub Action
-# install the GitHub App (human step)
-# scheduled `patch scan` opens PRs or Issues when APIs break
 ```
+
+Confirms connectors → writes `patch.config.json` → scaffolds a GitHub Action.  
+Then scheduled `patch scan` opens a **PR** or **Issue** when an API breaks.
+
+> Prefer the scoped package `@patch-dev/cli` — the unscoped npm name `patch` is unrelated.
+
+## Demo
+
+Silent walkthrough (break → scan → report → install):
+
+https://github.com/patchhq/patch/raw/main/docs/demo/patch-demo.mp4
+
+Or open [`docs/demo/patch-demo.mp4`](./docs/demo/patch-demo.mp4) in the repo.
+
+## Quick start
+
+```bash
+# In your TS/JS repo
+npx -y @patch-dev/cli init --yes
+npx -y @patch-dev/cli scan --dry-run
+```
+
+| Env | Purpose |
+|-----|---------|
+| `ANTHROPIC_API_KEY` | LLM classify/fix (heuristics without it) |
+| `GITHUB_TOKEN` or Patch GitHub App | Open PRs/Issues (else `.patch/reports/`) |
 
 ## How it works
 
@@ -21,31 +47,16 @@ connector fetch → diff snapshot → classify (ChangeEvent)
       → confidence ≥ threshold? PR : Issue → update snapshot
 ```
 
-Three connector types prove the architecture generalizes across **API sources**.
-Language scanners prove it generalizes across **codebases** (TS today; Python / Rust / Go stubs ready — see [docs/languages.md](./docs/languages.md)).
-User/default **rules** steer the fix agent — see [docs/rules.md](./docs/rules.md).
-
 | Connector | Source | Reliability |
 |-----------|--------|-------------|
 | `openapi-diff` | Formal OpenAPI JSON/YAML | Highest — structural contract |
 | `package-diff` | npm/PyPI + `.d.ts` | High — exact signatures |
 | `doc-scrape` | HTML docs, no formal spec | Lower — LLM bears more burden |
 
-## Quick start
+Language scanners: **TypeScript/JavaScript** implemented; Python / Rust / Go stubs — [docs/languages.md](./docs/languages.md).  
+Fix-agent rules — [docs/rules.md](./docs/rules.md). Confidence ceilings — [docs/confidence.md](./docs/confidence.md).
 
-```bash
-# In your TS/JS repo (scoped package — not the unrelated npm `patch`)
-npx -y @patch-dev/cli init --yes
-npx -y @patch-dev/cli scan --dry-run
-```
-
-See [docs/publishing.md](./docs/publishing.md) for pack/publish details.
-
-Set `ANTHROPIC_API_KEY` for LLM classification/fix generation. Without it, Patch falls back to deterministic heuristics (useful for CI of Patch itself).
-
-Set `GITHUB_TOKEN` (or install the Patch GitHub App) to open PRs/Issues. Without it, reports land in `.patch/reports/`.
-
-## Confidence scoring
+## Confidence
 
 | Validation outcome | Confidence ceiling |
 |--------------------|--------------------|
@@ -53,23 +64,30 @@ Set `GITHUB_TOKEN` (or install the Patch GitHub App) to open PRs/Issues. Without
 | `tsc` passes, no tests | ≤ 0.75 |
 | `tsc` fails | ≤ 0.25 |
 
-Above `confidence_threshold` (default `0.7`) → **PR**. Below → **Issue** with the same diagnosis.
+Above `confidence_threshold` (default `0.7`) → **PR**. Below → **Issue**.
 
-## Monorepo
+## Dogfood (this repo)
+
+```bash
+pnpm install && pnpm build
+pnpm dogfood   # baseline → break currency → scan --dry-run → restore
+```
+
+Details: [examples/dogfood.md](./examples/dogfood.md).
+
+## Develop
 
 ```
 packages/cli            @patch-dev/cli (published; bundles the rest)
 packages/core           schemas + connector + LanguageScanner interfaces
-packages/scanner-ts     TypeScript/JavaScript scanner (implemented)
-packages/scanner-python Python scanner stub
-packages/scanner-rust   Rust scanner stub
-packages/scanner-go     Go scanner stub
+packages/scanner-*      TS implemented; python/rust/go stubs
 packages/connectors/*   openapi-diff, doc-scrape, package-diff
 packages/classify       RawChange → ChangeEvent
-packages/fix           patch generation + per-language validation
-packages/github-app     PR/Issue bot
-apps/backend            hosted multi-tenant scheduler
-examples/fixture-repo   dogfood target
+packages/fix           agentic fix + validation
+packages/github-app     PR/Issue publisher
+apps/backend            hosted scheduler (optional)
+examples/fixture-repo   E2E target
+demos/video             Remotion source for the demo MP4
 ```
 
 ```bash
@@ -78,27 +96,19 @@ pnpm build
 pnpm test
 ```
 
-## Dogfooding the fixture
+Publishing the CLI: [docs/publishing.md](./docs/publishing.md). Contributing: [CONTRIBUTING.md](./CONTRIBUTING.md).
 
-```bash
-pnpm build
-node examples/dogfood.mjs
-```
-
-See [examples/dogfood.md](./examples/dogfood.md) for the manual baseline → break → scan walkthrough.
 ## Open source vs hosted
 
-**Open source (Apache-2.0):** CLI, connectors, scanner, PR templates, schemas.
+**Open source (Apache-2.0):** CLI, connectors, scanners, schemas, PR templates — this repo.
 
-**Hosted:** cross-customer scheduler, Claude classification/fix calls, certified connector packs for APIs without formal specs.
-
-Self-hosting is possible; it's just more work than paying for the hosted version.
+**Hosted (optional):** cross-customer scheduler, billed Claude calls, certified connector packs.
 
 ## Known MVP limitations
 
-- TypeScript/JavaScript call-site scanning is implemented; Python / Rust / Go scanners detect the repo but do not yet match call sites ([docs/languages.md](./docs/languages.md))
 - Dynamic `import()` is not scanned
 - PyPI registry path is stubbed (npm + local packages work)
+- Non-TS language scanners detect the repo but do not yet match call sites
 
 ## License
 

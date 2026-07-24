@@ -11,9 +11,11 @@ pnpm install --ignore-workspace
 pnpm render
 ```
 
-Output: `demos/video/out/patch-demo.mp4` (1920×1080, H.264 **Main** / **yuv420p** / faststart).
+Output: `out/patch-demo.mp4`. Copy into the docs tree for GitHub:
 
-The render step re-encodes with ffmpeg so the file opens in Windows Media Player, QuickTime, VLC, phones, etc. (Remotion’s default JPEG→`yuvj420p` often fails outside Chrome.)
+```bash
+cp out/patch-demo.mp4 ../../docs/demo/patch-demo.mp4
+```
 
 Preview in the Remotion studio:
 
