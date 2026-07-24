@@ -28,7 +28,7 @@ export interface ConnectorRegistryEntry {
   /** Connector factory id / config key. */
   connectorId: string;
   /** Which connector implementation to use. */
-  type: 'openapi-diff' | 'doc-scrape' | 'package-diff';
+  type: 'openapi-diff' | 'doc-scrape' | 'package-diff' | 'dependency-update';
   /** Connector-specific options written into patch.config.json. */
   options: Record<string, unknown>;
   /** Import path consumers typically use (for FixInstruction mapping). */

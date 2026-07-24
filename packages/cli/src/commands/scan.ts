@@ -17,6 +17,7 @@ import {
 import { createOpenApiDiffConnector } from '@patch-dev/connector-openapi-diff';
 import { createDocScrapeConnector } from '@patch-dev/connector-doc-scrape';
 import { createPackageDiffConnector } from '@patch-dev/connector-package-diff';
+import { createDependencyUpdateConnector } from '@patch-dev/connector-dependency-update';
 import { classifyChanges } from '@patch-dev/classify';
 import { generateAndValidateFix } from '@patch-dev/fix';
 import {
@@ -55,6 +56,18 @@ function buildConnector(cfg: ConnectorConfig, cwd: string): Connector {
         registry: (options['registry'] as 'npm' | 'pypi') ?? 'npm',
         localPath: options['localPath'] as string | undefined,
       });
+    case 'dependency-update':
+      return createDependencyUpdateConnector(cfg.id, {
+        repoRoot: cwd,
+        includeDevDependencies: Boolean(options['includeDevDependencies']),
+        includeOptionalDependencies: Boolean(options['includeOptionalDependencies']),
+        updateTypes: options['updateTypes'] as
+          | Array<'major' | 'minor' | 'patch'>
+          | undefined,
+        allow: options['allow'] as string[] | undefined,
+        deny: options['deny'] as string[] | undefined,
+        securityOnly: Boolean(options['securityOnly']),
+      });
     default: {
       const _exhaustive: never = cfg.type;
       throw new Error(`Unknown connector type: ${_exhaustive}`);
@@ -72,6 +85,9 @@ function sourceUrlFor(cfg: ConnectorConfig, current: RawSource): string | undefi
     const pkg = String(cfg.options['package'] ?? '');
     const version = current.metadata?.['version'];
     return `https://www.npmjs.com/package/${pkg}${version ? `/v/${version}` : ''}`;
+  }
+  if (cfg.type === 'dependency-update') {
+    return 'https://www.npmjs.com/';
   }
   return undefined;
 }

@@ -215,6 +215,57 @@ export function heuristicClassify(
     let transformKind: FixInstruction['transform']['kind'] = 'change_param';
 
     switch (change.kind) {
+      case 'dependency_outdated':
+      case 'security_advisory': {
+        type = 'dependency_update';
+        transformKind = 'bump_dependency';
+        const after = (change.after ?? {}) as {
+          name?: string;
+          section?: string;
+          range?: string;
+          version?: string;
+          updateKind?: string;
+        };
+        const pkgName =
+          after.name ??
+          change.path.split('.').slice(1).join('.') ??
+          options.importPath;
+        const section = after.section ?? change.path.split('.')[0] ?? 'dependencies';
+        const confidence = change.kind === 'security_advisory' ? 0.9 : 0.8;
+        const event: ChangeEvent = {
+          id,
+          connector_id: options.connectorId,
+          detected_at: now,
+          type,
+          surface: { kind: 'dependency', path: change.path },
+          old: {
+            signature: JSON.stringify(change.before ?? null),
+            description: change.kind,
+          },
+          new: {
+            signature: JSON.stringify(change.after ?? null),
+            description: change.kind,
+          },
+          source_excerpt: change.excerpt ?? change.kind,
+          confidence,
+        };
+        const instruction: FixInstruction = {
+          change_event_id: id,
+          match_pattern: {
+            import_path: pkgName,
+            symbol: section,
+          },
+          transform: {
+            kind: 'bump_dependency',
+            instructions:
+              change.excerpt ??
+              `Bump ${pkgName} in ${section} to ${after.range ?? after.version ?? 'latest'}`,
+          },
+        };
+        events.push(event);
+        instructions.push(instruction);
+        continue;
+      }
       case 'path_removed':
       case 'export_removed':
       case 'section_removed':

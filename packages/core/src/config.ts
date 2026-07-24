@@ -13,7 +13,12 @@ export const LanguageConfigSchema = z.enum([
 
 export const ConnectorConfigSchema = z.object({
   id: z.string().min(1),
-  type: z.enum(['openapi-diff', 'doc-scrape', 'package-diff']),
+  type: z.enum([
+    'openapi-diff',
+    'doc-scrape',
+    'package-diff',
+    'dependency-update',
+  ]),
   enabled: z.boolean().default(true),
   /** Module specifier for FixInstruction.match_pattern.import_path (any language). */
   import_path: z.string().min(1),

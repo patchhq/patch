@@ -28,6 +28,10 @@ const workspaceAliases: Record<string, string> = {
     packages,
     'connectors/package-diff/src/index.ts',
   ),
+  '@patch-dev/connector-dependency-update': path.join(
+    packages,
+    'connectors/dependency-update/src/index.ts',
+  ),
 };
 
 const external = [

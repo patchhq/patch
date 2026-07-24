@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 /** Surface of an API that changed (method, endpoint, field, or type). */
 export const SurfaceSchema = z.object({
-  kind: z.enum(['method', 'endpoint', 'field', 'type']),
+  kind: z.enum(['method', 'endpoint', 'field', 'type', 'dependency']),
   path: z.string().min(1),
 });
 export type Surface = z.infer<typeof SurfaceSchema>;
@@ -27,6 +27,8 @@ export const ChangeEventSchema = z.object({
     'type_changed',
     'deprecated',
     'behavior_changed',
+    /** Consumer dependency version bump / security patch (Dependabot-style). */
+    'dependency_update',
   ]),
   surface: SurfaceSchema,
   old: SignatureBlockSchema,
@@ -55,7 +57,14 @@ export const MatchPatternSchema = z.object({
 export type MatchPattern = z.infer<typeof MatchPatternSchema>;
 
 export const TransformSchema = z.object({
-  kind: z.enum(['rename_method', 'change_param', 'wrap_call', 'remove_call']),
+  kind: z.enum([
+    'rename_method',
+    'change_param',
+    'wrap_call',
+    'remove_call',
+    /** Bump a package.json / lockfile dependency version. */
+    'bump_dependency',
+  ]),
   instructions: z.string().min(1),
 });
 export type Transform = z.infer<typeof TransformSchema>;

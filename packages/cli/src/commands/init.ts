@@ -195,6 +195,21 @@ export async function runInit(options: InitOptions): Promise<void> {
     options: m.options,
   }));
 
+  // Dependabot-style npm dependency + security updates (enabled by default when package.json exists).
+  if (existsSync(join(options.cwd, 'package.json'))) {
+    connectors.push({
+      id: 'npm-dependency-updates',
+      type: 'dependency-update',
+      enabled: true,
+      import_path: '*',
+      options: {
+        includeDevDependencies: false,
+        updateTypes: ['patch', 'minor'],
+        deny: [],
+      },
+    });
+  }
+
   const config: PatchConfig = {
     version: 1,
     confidence_threshold: 0.7,

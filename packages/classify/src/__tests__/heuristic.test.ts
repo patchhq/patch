@@ -55,4 +55,31 @@ describe('heuristicClassify', () => {
     expect(result.instructions[0]?.match_pattern.symbol).toBe('createCharge');
     expect(result.events[0]?.type).toBe('type_changed');
   });
+
+  it('maps dependency_outdated to bump_dependency', () => {
+    const result = heuristicClassify(
+      [
+        {
+          kind: 'dependency_outdated',
+          path: 'dependencies.lodash',
+          before: { name: 'lodash', section: 'dependencies', version: '4.17.20' },
+          after: {
+            name: 'lodash',
+            section: 'dependencies',
+            range: '^4.17.21',
+            version: '4.17.21',
+            updateKind: 'patch',
+          },
+          excerpt: 'Dependency update lodash: 4.17.20 → ^4.17.21 (patch)',
+          structural_confidence: 'high',
+        },
+      ],
+      { connectorId: 'npm-dependency-updates', importPath: '*' },
+    );
+    expect(result.events).toHaveLength(1);
+    expect(result.events[0]?.type).toBe('dependency_update');
+    expect(result.instructions[0]?.transform.kind).toBe('bump_dependency');
+    expect(result.instructions[0]?.match_pattern.import_path).toBe('lodash');
+    expect(result.instructions[0]?.match_pattern.symbol).toBe('dependencies');
+  });
 });

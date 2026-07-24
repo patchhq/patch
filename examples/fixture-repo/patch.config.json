@@ -2,16 +2,13 @@
   "version": 1,
   "confidence_threshold": 0.7,
   "snapshot_db": ".patch/snapshots.db",
-  "languages": [
-    "typescript"
-  ],
+  "languages": ["typescript"],
   "max_fix_attempts": 3,
   "rules": [],
   "disable_default_rules": [],
   "model": {
     "provider": "anthropic",
-    "api_key_env": "ANTHROPIC_API_KEY",
-    "model": "claude-sonnet-4-20250514"
+    "api_key_env": "ANTHROPIC_API_KEY"
   },
   "connectors": [
     {
@@ -23,6 +20,17 @@
         "package": "@fixture/fake-api-client",
         "registry": "npm",
         "localPath": "../fake-api-client"
+      }
+    },
+    {
+      "id": "npm-dependency-updates",
+      "type": "dependency-update",
+      "enabled": true,
+      "import_path": "*",
+      "options": {
+        "includeDevDependencies": false,
+        "updateTypes": ["patch", "minor"],
+        "deny": ["@fixture/fake-api-client"]
       }
     }
   ]

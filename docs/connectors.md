@@ -39,6 +39,33 @@ Fetches HTML docs, strips nav/boilerplate, sectionizes on headings, and emits ch
 
 Polls npm for latest version (or reads a `localPath` for unpublished packages), extracts exported declarations from `.d.ts` via the TypeScript compiler API, and diffs signatures. Pairs with `CHANGELOG.md` when present.
 
+## dependency-update
+
+Dependabot-style **consumer** dependency updates for npm `package.json`:
+
+- Detects outdated `dependencies` (optional: `devDependencies`)
+- Classifies bumps as `patch` / `minor` / `major` (default: patch + minor; majors opt-in)
+- Checks [OSV](https://osv.dev) for known vulnerabilities and emits `security_advisory` (higher confidence → PR)
+- Opens the same Patch PR/Issue path by bumping the version range in `package.json`
+
+```json
+{
+  "id": "npm-dependency-updates",
+  "type": "dependency-update",
+  "enabled": true,
+  "import_path": "*",
+  "options": {
+    "includeDevDependencies": false,
+    "updateTypes": ["patch", "minor"],
+    "allow": [],
+    "deny": [],
+    "securityOnly": false
+  }
+}
+```
+
+`patch init` adds this connector automatically when a `package.json` is present.
+
 ## Config example
 
 ```json

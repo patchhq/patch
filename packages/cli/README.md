@@ -1,6 +1,6 @@
 # `@patch-dev/cli`
 
-Detect upstream API breaking changes and open pull requests that fix your TypeScript/JavaScript codebase.
+Detect upstream API breaking changes, Dependabot-style dependency updates, and open pull requests that fix your TypeScript/JavaScript codebase.
 
 > The bin is named `patch`. The npm package is `@patch-dev/cli` (the unscoped name `patch` on npm is unrelated).
 

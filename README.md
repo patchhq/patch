@@ -1,6 +1,6 @@
 # Patch
 
-**Detect upstream API breaking changes and open PRs that fix your TypeScript/JavaScript codebase.**
+**Detect upstream API breaking changes, dependency updates, and open PRs that fix your TypeScript/JavaScript codebase.**
 
 [![npm](https://img.shields.io/npm/v/@patch-dev/cli.svg)](https://www.npmjs.com/package/@patch-dev/cli)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](./LICENSE)
@@ -64,15 +64,18 @@ patch init → detect API deps + languages → config + Action + App install
                 │
                 ▼ (on schedule)
 connector fetch → diff snapshot → classify (ChangeEvent)
-      → map FixInstruction → LanguageScanner(s)
+      → map FixInstruction → LanguageScanner(s) / package.json
       → agentic fix loop (propose → validate → revise ≤3)
       → confidence ≥ threshold? PR : Issue → update snapshot
 ```
+
+Also covers **Dependabot-style** npm version + security bumps via `dependency-update` (see [docs/connectors.md](./docs/connectors.md)).
 
 | Connector | Source | Reliability |
 |-----------|--------|-------------|
 | `openapi-diff` | Formal OpenAPI JSON/YAML | Highest — structural contract |
 | `package-diff` | npm/PyPI + `.d.ts` | High — exact signatures |
+| `dependency-update` | npm registry + OSV advisories | High — Dependabot-style version/security bumps |
 | `doc-scrape` | HTML docs, no formal spec | Lower — LLM bears more burden |
 
 Language scanners: **TypeScript/JavaScript** implemented; Python / Rust / Go stubs — [docs/languages.md](./docs/languages.md).  

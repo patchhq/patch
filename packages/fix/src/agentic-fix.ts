@@ -370,12 +370,36 @@ export function heuristicProposeFix(ctx: ProposeFixContext): GeneratedFix {
     }
   } else if (instruction.transform.kind === 'remove_call') {
     after = `/* removed by patch: ${event.surface.path} */`;
+  } else if (instruction.transform.kind === 'bump_dependency') {
+    const afterObj = (() => {
+      try {
+        return JSON.parse(event.new.signature) as {
+          range?: string;
+          version?: string;
+        };
+      } catch {
+        return {};
+      }
+    })();
+    const targetRange = afterObj.range ?? afterObj.version;
+    const pkgName = instruction.match_pattern.import_path;
+    if (targetRange && lineText.includes(`"${pkgName}"`)) {
+      after = lineText.replace(
+        /:\s*"[^"]*"/,
+        `: "${targetRange}"`,
+      );
+    } else {
+      after = `${lineText}\n// TODO(patch): ${instruction.transform.instructions}`;
+    }
   }
 
   return {
     before: lineText,
     after,
-    confidence: Math.min(event.confidence, 0.55),
+    confidence:
+      instruction.transform.kind === 'bump_dependency'
+        ? Math.min(event.confidence, event.type === 'dependency_update' ? 0.85 : 0.55)
+        : Math.min(event.confidence, 0.55),
     rationale: `Heuristic fix for ${event.type} on ${event.surface.path}. Review carefully.`,
   };
 }

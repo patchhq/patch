@@ -1,6 +1,6 @@
 {
   "name": "@patch-dev/cli",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Detect upstream API breaking changes and open PRs to fix your codebase",
   "license": "Apache-2.0",
   "type": "module",
@@ -64,6 +64,7 @@
     "@patch-dev/connector-doc-scrape": "workspace:*",
     "@patch-dev/connector-openapi-diff": "workspace:*",
     "@patch-dev/connector-package-diff": "workspace:*",
+    "@patch-dev/connector-dependency-update": "workspace:*",
     "@patch-dev/core": "workspace:*",
     "@patch-dev/fix": "workspace:*",
     "@patch-dev/github-app": "workspace:*",
