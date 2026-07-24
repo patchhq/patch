@@ -115,6 +115,11 @@ describe('PatchConfigSchema', () => {
     });
     expect(cfg.confidence_threshold).toBe(0.7);
     expect(cfg.version).toBe(1);
+    expect(cfg.model).toEqual({
+      provider: 'anthropic',
+      api_key_env: 'ANTHROPIC_API_KEY',
+      model: 'claude-sonnet-4-20250514',
+    });
   });
 
   it('accepts languages list', () => {

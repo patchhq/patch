@@ -207,7 +207,7 @@ export function resolveRepoSlug(cwd: string): { owner: string; repo: string } | 
 export function readGithubAppInstallUrl(): string {
   return (
     process.env['PATCH_GITHUB_APP_INSTALL_URL'] ??
-    'https://github.com/apps/patch-bot/installations/new'
+    'https://github.com/apps/patchhq/installations/new'
   );
 }
 

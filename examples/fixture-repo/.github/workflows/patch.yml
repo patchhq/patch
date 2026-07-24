@@ -3,6 +3,7 @@ name: patch
 
 on:
   schedule:
+    # Daily at 14:00 UTC — APIs don't change hourly
     - cron: '0 14 * * *'
   workflow_dispatch:
 
@@ -29,5 +30,6 @@ jobs:
       - name: Run patch scan
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          # Prefer App token when the previous step succeeded; else workflow GITHUB_TOKEN
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
         run: patch scan

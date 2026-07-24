@@ -67,6 +67,16 @@ function setApiVersion(version, dts) {
   writeFileSync(pkgPath, `${JSON.stringify(pkg, null, 2)}\n`);
 }
 
+function requiredApiKeyEnv() {
+  const cfgPath = join(fixtureDir, 'patch.config.json');
+  const cfg = JSON.parse(readFileSync(cfgPath, 'utf8'));
+  const provider = cfg.model?.provider ?? 'anthropic';
+  return (
+    cfg.model?.api_key_env ??
+    (provider === 'openai' ? 'OPENAI_API_KEY' : 'ANTHROPIC_API_KEY')
+  );
+}
+
 function runScan() {
   const result = spawnSync(process.execPath, [cliBin, 'scan', '--dry-run'], {
     cwd: fixtureDir,
@@ -81,6 +91,15 @@ function runScan() {
 function main() {
   if (!existsSync(cliBin)) {
     console.error('Missing CLI build. Run: pnpm --filter @patch-dev/cli build');
+    process.exit(1);
+  }
+
+  const keyEnv = requiredApiKeyEnv();
+  if (!process.env[keyEnv]?.trim()) {
+    console.error(
+      `Missing API key for dogfood. Set environment variable ${keyEnv} ` +
+        `(see README “Model providers”).`,
+    );
     process.exit(1);
   }
 

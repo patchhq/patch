@@ -2,10 +2,17 @@
   "version": 1,
   "confidence_threshold": 0.7,
   "snapshot_db": ".patch/snapshots.db",
-  "languages": ["typescript"],
+  "languages": [
+    "typescript"
+  ],
   "max_fix_attempts": 3,
   "rules": [],
   "disable_default_rules": [],
+  "model": {
+    "provider": "anthropic",
+    "api_key_env": "ANTHROPIC_API_KEY",
+    "model": "claude-sonnet-4-20250514"
+  },
   "connectors": [
     {
       "id": "fixture-fake-api",

@@ -3,7 +3,6 @@ import { join, dirname } from 'node:path';
 import { tmpdir } from 'node:os';
 import { spawnSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
-import Anthropic from '@anthropic-ai/sdk';
 import { z } from 'zod';
 import {
   MAX_FILE_READS_PER_ATTEMPT,
@@ -17,6 +16,7 @@ import {
   type PatchResult,
   type PatchRule,
 } from '@patch-dev/core';
+import type { ModelMessage, ModelProvider } from '@patch-dev/model';
 import { validateProject, type ProjectValidation } from './validators.js';
 import {
   READ_FILE_TOOL,
@@ -84,15 +84,14 @@ export interface ProposeFixContext {
 }
 
 /**
- * Injectable proposer — production uses Claude; tests inject a mock.
+ * Injectable proposer — production uses ModelProvider; tests inject a mock.
  */
 export type ProposeFixFn = (ctx: ProposeFixContext) => Promise<GeneratedFix>;
 
 export interface AgenticFixOptions {
   repoRoot: string;
-  apiKey?: string;
-  model?: string;
-  client?: Anthropic;
+  /** Pluggable LLM used when proposeFix is not injected. */
+  provider?: ModelProvider;
   rules?: PatchRule[];
   maxAttempts?: number;
   maxFileReadsPerAttempt?: number;
@@ -212,67 +211,76 @@ When ready, respond with ONLY JSON (no markdown fence required):
 }
 
 /**
- * Claude-backed proposer with optional read_file tool-use loop (capped per attempt).
+ * Provider-backed proposer with optional read_file tool-use loop (capped per attempt).
  */
-export async function claudeProposeFix(
+export async function providerProposeFix(
   ctx: ProposeFixContext,
-  client: Anthropic,
-  model: string,
+  provider: ModelProvider,
 ): Promise<GeneratedFix> {
   const fileContent = readFileSync(join(ctx.repoRoot, ctx.site.file), 'utf8');
-  const messages: Anthropic.MessageParam[] = [
+  const messages: ModelMessage[] = [
     { role: 'user', content: buildProposePrompt(ctx, fileContent) },
   ];
 
   for (let round = 0; round < ctx.maxFileReads + 2; round++) {
-    const response = await client.messages.create({
-      model,
-      max_tokens: 4096,
-      tools: [READ_FILE_TOOL],
+    const response = await provider.complete({
+      maxTokens: 4096,
+      tools: [
+        {
+          name: READ_FILE_TOOL.name,
+          description: READ_FILE_TOOL.description,
+          input_schema: READ_FILE_TOOL.input_schema as Record<string, unknown>,
+        },
+      ],
       messages,
     });
 
-    const toolUses = response.content.filter(
-      (b): b is Anthropic.ToolUseBlock => b.type === 'tool_use',
-    );
-    const textBlocks = response.content.filter(
-      (b): b is Anthropic.TextBlock => b.type === 'text',
-    );
-
-    if (toolUses.length > 0) {
-      messages.push({ role: 'assistant', content: response.content });
-      const toolResults: Anthropic.ToolResultBlockParam[] = [];
-      for (const tu of toolUses) {
-        if (tu.name !== 'read_file') {
-          toolResults.push({
-            type: 'tool_result',
-            tool_use_id: tu.id,
-            content: `Unknown tool: ${tu.name}`,
+    if (response.toolCalls.length > 0) {
+      messages.push({
+        role: 'assistant',
+        content: [
+          ...(response.content
+            ? [{ type: 'text' as const, text: response.content }]
+            : []),
+          ...response.toolCalls.map((tc) => ({
+            type: 'tool_use' as const,
+            id: tc.id,
+            name: tc.name,
+            input: tc.input,
+          })),
+        ],
+      });
+      const toolResultParts = [];
+      for (const tc of response.toolCalls) {
+        if (tc.name !== 'read_file') {
+          toolResultParts.push({
+            type: 'tool_result' as const,
+            tool_use_id: tc.id,
+            content: `Unknown tool: ${tc.name}`,
             is_error: true,
           });
           continue;
         }
-        const input = tu.input as { path?: string };
         const result = executeReadFile(
           ctx.repoRoot,
-          String(input.path ?? ''),
+          String(tc.input['path'] ?? ''),
           ctx.readState,
           ctx.maxFileReads,
         );
-        toolResults.push({
-          type: 'tool_result',
-          tool_use_id: tu.id,
+        toolResultParts.push({
+          type: 'tool_result' as const,
+          tool_use_id: tc.id,
           content: result.ok
             ? `File: ${result.path}\n\n${result.content}`
             : result.error,
           is_error: !result.ok,
         });
       }
-      messages.push({ role: 'user', content: toolResults });
+      messages.push({ role: 'user', content: toolResultParts });
       continue;
     }
 
-    const text = textBlocks.map((b) => b.text).join('\n');
+    const text = response.content;
     let lastErr: string | undefined;
     for (let parseAttempt = 0; parseAttempt < 2; parseAttempt++) {
       try {
@@ -280,22 +288,17 @@ export async function claudeProposeFix(
       } catch (err) {
         lastErr = err instanceof Error ? err.message : String(err);
         if (parseAttempt === 0) {
-          messages.push({ role: 'assistant', content: response.content });
+          messages.push({ role: 'assistant', content: text });
           messages.push({
             role: 'user',
             content: `JSON validation failed: ${lastErr}\nRespond with corrected JSON only.`,
           });
-          const retry = await client.messages.create({
-            model,
-            max_tokens: 2048,
+          const retry = await provider.complete({
+            maxTokens: 2048,
             messages,
           });
-          const retryText = retry.content
-            .filter((b): b is Anthropic.TextBlock => b.type === 'text')
-            .map((b) => b.text)
-            .join('\n');
           try {
-            return GeneratedFixSchema.parse(extractJson(retryText));
+            return GeneratedFixSchema.parse(extractJson(retry.content));
           } catch (err2) {
             lastErr = err2 instanceof Error ? err2.message : String(err2);
           }
@@ -307,6 +310,9 @@ export async function claudeProposeFix(
 
   throw new Error('Exceeded tool-use rounds without a final patch.');
 }
+
+/** @deprecated Use providerProposeFix — kept as alias for older imports. */
+export const claudeProposeFix = providerProposeFix;
 
 export function heuristicProposeFix(ctx: ProposeFixContext): GeneratedFix {
   const fileContent = readFileSync(join(ctx.repoRoot, ctx.site.file), 'utf8');
@@ -492,16 +498,10 @@ export async function generateAndValidateFix(
     options.rules ??
     loadRules(options.repoRoot);
 
-  const apiKey = options.apiKey ?? process.env['ANTHROPIC_API_KEY'];
   const propose: ProposeFixFn =
     options.proposeFix ??
-    (apiKey || options.client
-      ? (ctx) =>
-          claudeProposeFix(
-            ctx,
-            options.client ?? new Anthropic({ apiKey }),
-            options.model ?? 'claude-sonnet-4-20250514',
-          )
+    (options.provider
+      ? (ctx) => providerProposeFix(ctx, options.provider!)
       : async (ctx) => heuristicProposeFix(ctx));
 
   const worktreeRoot = options.worktreeRoot ?? join(tmpdir(), 'patch-worktrees');

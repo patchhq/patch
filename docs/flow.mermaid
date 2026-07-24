@@ -1,6 +1,6 @@
 flowchart TD
     subgraph UF[User Flow]
-        A[Run npx -y @patch-dev/cli init] --> B[Patch scans package.json for known API deps]
+        A[Run npx patch init] --> B[Patch scans package.json for known API deps]
         B --> C[User confirms detected connectors]
         C --> D[Writes config, rules, scaffolds GitHub Action, installs GitHub App]
         D --> E[No further manual steps]

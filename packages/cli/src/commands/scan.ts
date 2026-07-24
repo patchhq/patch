@@ -9,6 +9,11 @@ import {
   type ConnectorConfig,
   type RawSource,
 } from '@patch-dev/core';
+import {
+  createModelProvider,
+  MissingModelKeyError,
+  type ModelProvider,
+} from '@patch-dev/model';
 import { createOpenApiDiffConnector } from '@patch-dev/connector-openapi-diff';
 import { createDocScrapeConnector } from '@patch-dev/connector-doc-scrape';
 import { createPackageDiffConnector } from '@patch-dev/connector-package-diff';
@@ -78,6 +83,22 @@ function sourceUrlFor(cfg: ConnectorConfig, current: RawSource): string | undefi
 export async function runScan(options: ScanOptions): Promise<void> {
   ensureScannersRegistered();
   const config = loadConfig(options.cwd);
+
+  let provider: ModelProvider | undefined;
+  try {
+    provider = createModelProvider({ config: config.model });
+  } catch (err) {
+    if (err instanceof MissingModelKeyError) {
+      console.error(err.message);
+      process.exit(1);
+    }
+    throw err;
+  }
+
+  console.log(
+    `Model: ${config.model.provider} (${config.model.model}) via $${config.model.api_key_env}`,
+  );
+
   const store = new SqliteSnapshotStore(resolve(options.cwd, config.snapshot_db));
   const connectors = activeConnectors(config);
   const scanners = resolveScannersForRepo(options.cwd, config.languages);
@@ -141,6 +162,7 @@ export async function runScan(options: ScanOptions): Promise<void> {
       const classified = await classifyChanges(rawChanges, {
         connectorId: cfg.id,
         importPath: cfg.import_path,
+        provider,
       });
 
       if (classified.needsManualReview.length > 0) {
@@ -181,6 +203,7 @@ export async function runScan(options: ScanOptions): Promise<void> {
             repoRoot: options.cwd,
             rules,
             maxAttempts: config.max_fix_attempts,
+            provider,
           });
           validated.push(result);
           const obs = result.observability;

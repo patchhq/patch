@@ -2,13 +2,19 @@
 
 Detect upstream API breaking changes and open pull requests that fix your TypeScript/JavaScript codebase.
 
-> The bin is named `patch`. Prefer the scoped package — the unscoped npm name `patch` is unrelated.
+> The bin is named `patch`. The npm package is `@patch-dev/cli` (the unscoped name `patch` on npm is unrelated).
 
 ## Quick start
 
 ```bash
-npx -y @patch-dev/cli init
-npx -y @patch-dev/cli scan --dry-run
+npx patch init
+npx patch scan --dry-run
+```
+
+Reliable one-liner if `npx patch` hits the wrong package:
+
+```bash
+npx -y --package=@patch-dev/cli patch init
 ```
 
 `init` writes `patch.config.json`, scaffolds a GitHub Action, and `.patch/rules.md`.  
@@ -17,7 +23,7 @@ npx -y @patch-dev/cli scan --dry-run
 ## Requirements
 
 - Node.js 20+
-- Optional: `ANTHROPIC_API_KEY` (LLM classify/fix; heuristics without it)
+- Required: `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` (matches `patch.config.json` → `model`)
 - Optional: `GITHUB_TOKEN` or the Patch GitHub App (local reports without it)
 
 ## Docs

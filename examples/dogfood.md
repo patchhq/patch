@@ -7,9 +7,10 @@ This walkthrough proves the full pipeline on `examples/fixture-repo` without Git
 ```bash
 pnpm install
 pnpm build
+export ANTHROPIC_API_KEY=…   # or OPENAI_API_KEY if model.provider is openai
 ```
 
-No `ANTHROPIC_API_KEY` is required — classify/fix fall back to heuristics (good for CI).
+`patch scan` requires the API key named in `patch.config.json` → `model.api_key_env`. Without it, scan exits immediately with a clear error (no SDK stack trace).
 
 ## One-shot
 
@@ -27,16 +28,12 @@ That script:
 ## What success looks like
 
 ```
+Model: anthropic (…) via $ANTHROPIC_API_KEY
 classified 1 event(s), 1 fix instruction(s)
 ChargeOptions: 4 match site(s)
-  src/consumer-default.ts:6 confidence=55% check=true … passedOn=1
-  src/consumer-named.ts:6 …
-  src/consumer-namespace.ts:6 …
-  src/consumer-wrapper.ts:6 …
+  …
 dry-run report: …/.patch/reports/<uuid>.md
 ```
-
-Heuristic confidence is capped (~55%), so dry-run writes an **Issue-style** report (below the 0.7 PR threshold). With `ANTHROPIC_API_KEY`, classify/fix quality (and confidence) improves.
 
 ## Manual steps
 
@@ -54,5 +51,5 @@ node ../../packages/cli/dist/bin.js scan --dry-run
 Or against the published package (after npm publish):
 
 ```bash
-npx -y @patch-dev/cli scan --dry-run
+npx patch scan --dry-run
 ```

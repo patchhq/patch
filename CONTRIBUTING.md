@@ -16,7 +16,7 @@ Requires Node 20+ and pnpm 9+.
 
 | Path | Purpose |
 |------|---------|
-| `packages/cli` | Published as `@patch-dev/cli` (`npx -y @patch-dev/cli init`) |
+| `packages/cli` | Published as `@patch-dev/cli` (`npx patch init`) |
 | `packages/core` | Zod schemas, connector interface, snapshot store, config |
 | `packages/scanner-ts` | TypeScript/JavaScript call-site scanner (implemented) |
 | `packages/scanner-python` | Python scanner stub (extension point) |

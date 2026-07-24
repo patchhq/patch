@@ -1,7 +1,7 @@
 {
   "name": "@patch-dev/classify",
   "version": "0.1.0",
-  "description": "Claude-powered classification of RawChange[] into ChangeEvent + FixInstruction",
+  "description": "LLM classification of RawChange[] into ChangeEvent + FixInstruction",
   "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/index.js",
@@ -23,8 +23,8 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.39.0",
     "@patch-dev/core": "workspace:*",
+    "@patch-dev/model": "workspace:*",
     "zod": "^3.24.1"
   },
   "devDependencies": {

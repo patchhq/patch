@@ -1,5 +1,4 @@
 import { randomUUID } from 'node:crypto';
-import Anthropic from '@anthropic-ai/sdk';
 import { z } from 'zod';
 import {
   ChangeEventSchema,
@@ -8,15 +7,17 @@ import {
   type FixInstruction,
   type RawChange,
 } from '@patch-dev/core';
+import type { ModelProvider } from '@patch-dev/model';
 
 export interface ClassifyOptions {
   connectorId: string;
   /** Default import path for FixInstruction mapping. */
   importPath: string;
-  apiKey?: string;
-  model?: string;
-  /** Inject a mock for tests. */
-  client?: Anthropic;
+  /**
+   * When set, use this provider for LLM classification.
+   * When omitted, falls back to deterministic heuristics (unit tests / offline).
+   */
+  provider?: ModelProvider;
 }
 
 export interface ClassifyResult {
@@ -118,21 +119,17 @@ export async function classifyChanges(
     return { events: [], instructions: [], needsManualReview: [] };
   }
 
-  const apiKey = options.apiKey ?? process.env['ANTHROPIC_API_KEY'];
-  if (!apiKey && !options.client) {
-    // Deterministic heuristic fallback when no API key (local/dev/CI).
+  if (!options.provider) {
     return heuristicClassify(changes, options);
   }
 
-  const client = options.client ?? new Anthropic({ apiKey });
-  const model = options.model ?? 'claude-sonnet-4-20250514';
+  const provider = options.provider;
 
   let validationError: string | undefined;
   for (let attempt = 0; attempt < 2; attempt++) {
-    const response = await client.messages.create({
-      model,
-      max_tokens: 4096,
+    const result = await provider.complete({
       system: SYSTEM_PROMPT,
+      maxTokens: 4096,
       messages: [
         {
           role: 'user',
@@ -146,13 +143,8 @@ export async function classifyChanges(
       ],
     });
 
-    const text = response.content
-      .filter((b) => b.type === 'text')
-      .map((b) => b.text)
-      .join('\n');
-
     try {
-      const parsed = ClassifyBatchSchema.parse(extractJson(text));
+      const parsed = ClassifyBatchSchema.parse(extractJson(result.content));
       const events: ChangeEvent[] = [];
       const instructions: FixInstruction[] = [];
       const now = new Date().toISOString();
@@ -198,7 +190,7 @@ export async function classifyChanges(
 }
 
 /**
- * Offline heuristic classifier for CI / no-API-key runs.
+ * Offline heuristic classifier for CI / no-provider runs.
  * Maps obvious structural kinds into ChangeEvents without an LLM.
  */
 export function heuristicClassify(

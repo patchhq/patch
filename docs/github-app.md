@@ -10,7 +10,7 @@ Patch opens **PRs** (confidence ≥ threshold) or **Issues** (below threshold) u
 1. GitHub → **Settings → Developer settings → GitHub Apps → New GitHub App**  
    (org: [patchhq](https://github.com/organizations/patchhq/settings/apps) or your user)
 2. Fill in:
-   - **GitHub App name:** e.g. `Patch` / `patch-bot`
+   - **GitHub App name:** e.g. `patchhq` / `patchhq-bot` (must be globally unique)
    - **Homepage URL:** `https://github.com/patchhq/patch`
    - **Webhook:** uncheck Active (CLI polls; no webhook required for MVP)
 3. **Repository permissions:**
@@ -23,7 +23,7 @@ Patch opens **PRs** (confidence ≥ threshold) or **Issues** (below threshold) u
 5. Create the App → **Generate a private key** → download the `.pem`
 6. Note the **App ID** (top of the App settings page)
 7. **Install App** on the repos that will run `patch scan`  
-   Copy the install URL (or set `PATCH_GITHUB_APP_INSTALL_URL`)
+   Copy the install URL (or set `PATCH_GITHUB_APP_INSTALL_URL`, default `https://github.com/apps/patchhq/installations/new`)
 
 ## Secrets / env
 
@@ -32,9 +32,9 @@ Patch opens **PRs** (confidence ≥ threshold) or **Issues** (below threshold) u
 | `PATCH_GITHUB_APP_ID` | Actions secret / `.env` | Numeric App ID |
 | `PATCH_GITHUB_APP_PRIVATE_KEY` | Actions secret / `.env` | Full PEM (use `\n` for newlines in env files) |
 | `PATCH_GITHUB_APP_INSTALLATION_ID` | Optional | Skip auto lookup of installation for `owner/repo` |
-| `PATCH_GITHUB_APP_INSTALL_URL` | Optional | Shown by `patch init` (default `…/apps/patch-bot/…`) |
+| `PATCH_GITHUB_APP_INSTALL_URL` | Optional | Shown by `patch init` (default `https://github.com/apps/patchhq/installations/new`) |
 | `GITHUB_TOKEN` | Optional override | PAT / Actions token — used **instead of** the App when set |
-| `ANTHROPIC_API_KEY` | Recommended | LLM classify/fix |
+| `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` | Required | LLM classify/fix (matches `model.provider`) |
 
 Aliases also accepted: `GITHUB_APP_ID`, `GITHUB_APP_PRIVATE_KEY`, `GITHUB_APP_INSTALLATION_ID`.
 
@@ -48,7 +48,7 @@ Aliases also accepted: `GITHUB_APP_ID`, `GITHUB_APP_PRIVATE_KEY`, `GITHUB_APP_IN
 
 Repo secrets to add:
 
-- `ANTHROPIC_API_KEY`
+- `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` (whichever `patch.config.json` → `model` uses)
 - `PATCH_GITHUB_APP_ID`
 - `PATCH_GITHUB_APP_PRIVATE_KEY`
 
@@ -58,7 +58,7 @@ Repo secrets to add:
 export PATCH_GITHUB_APP_ID=…
 export PATCH_GITHUB_APP_PRIVATE_KEY="$(cat path/to/app.pem)"
 # or: export GITHUB_TOKEN=ghp_…
-npx -y @patch-dev/cli scan
+npx patch scan
 ```
 
 Auth precedence: **PAT (`GITHUB_TOKEN`) → GitHub App**.

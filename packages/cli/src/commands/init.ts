@@ -8,8 +8,14 @@ import {
   languageDisplayName,
   writeDefaultRulesFile,
   type ConnectorConfig,
+  type ModelConfig,
   type PatchConfig,
 } from '@patch-dev/core';
+import {
+  keySignupUrl,
+  readApiKeyFromEnv,
+  type ModelProviderId,
+} from '@patch-dev/model';
 import { readGithubAppInstallUrl } from '@patch-dev/github-app';
 
 export interface InitOptions {
@@ -27,7 +33,7 @@ function readPackageDeps(cwd: string): Record<string, string> {
   return { ...pkg.dependencies, ...pkg.devDependencies };
 }
 
-function scaffoldWorkflow(cwd: string): string {
+function scaffoldWorkflow(cwd: string, apiKeyEnv: string): string {
   const dir = join(cwd, '.github', 'workflows');
   mkdirSync(dir, { recursive: true });
   const path = join(dir, 'patch.yml');
@@ -62,7 +68,7 @@ jobs:
       - run: npm install -g @patch-dev/cli@latest
       - name: Run patch scan
         env:
-          ANTHROPIC_API_KEY: \${{ secrets.ANTHROPIC_API_KEY }}
+          ${apiKeyEnv}: \${{ secrets.${apiKeyEnv} }}
           # Prefer App token when the previous step succeeded; else workflow GITHUB_TOKEN
           GITHUB_TOKEN: \${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
         run: patch scan
@@ -81,6 +87,55 @@ async function confirm(message: string, yesFlag: boolean): Promise<boolean> {
   } finally {
     rl.close();
   }
+}
+
+function resolveModelChoice(provider: ModelProviderId): ModelConfig {
+  if (provider === 'openai') {
+    return {
+      provider: 'openai',
+      api_key_env: 'OPENAI_API_KEY',
+      model: 'gpt-4o',
+    };
+  }
+  return {
+    provider: 'anthropic',
+    api_key_env: 'ANTHROPIC_API_KEY',
+    model: 'claude-sonnet-4-20250514',
+  };
+}
+
+async function chooseProvider(yesFlag: boolean): Promise<ModelProviderId> {
+  if (yesFlag || !process.stdin.isTTY) {
+    return 'anthropic';
+  }
+  const rl = createInterface({ input, output });
+  try {
+    console.log('Which LLM provider should Patch use for classify + fix?');
+    console.log('  1) Anthropic (Claude) — env ANTHROPIC_API_KEY');
+    console.log('  2) OpenAI (GPT / Codex-style) — env OPENAI_API_KEY');
+    const answer = await rl.question('Provider [1/2] (default 1): ');
+    const trimmed = answer.trim();
+    if (trimmed === '2' || /^openai$/i.test(trimmed)) return 'openai';
+    return 'anthropic';
+  } finally {
+    rl.close();
+  }
+}
+
+function printKeySetup(model: ModelConfig): void {
+  const { provider, api_key_env } = model;
+  if (readApiKeyFromEnv(api_key_env)) {
+    console.log(`Found $${api_key_env} in the environment.`);
+    return;
+  }
+  console.log();
+  console.log(`${api_key_env} is not set.`);
+  console.log(`Set it before running \`patch scan\`:`);
+  console.log(`  export ${api_key_env}=your-key-here`);
+  console.log(`Get a key at ${keySignupUrl(provider)}`);
+  console.log(
+    `(Never put the key in patch.config.json — only provider + api_key_env belong there.)`,
+  );
 }
 
 export async function runInit(options: InitOptions): Promise<void> {
@@ -129,6 +184,9 @@ export async function runInit(options: InitOptions): Promise<void> {
     return;
   }
 
+  const provider = await chooseProvider(options.yes);
+  const model = resolveModelChoice(provider);
+
   const connectors: ConnectorConfig[] = matches.map((m) => ({
     id: m.connectorId,
     type: m.type,
@@ -145,6 +203,7 @@ export async function runInit(options: InitOptions): Promise<void> {
     max_fix_attempts: 3,
     rules: [],
     disable_default_rules: [],
+    model,
     connectors:
       connectors.length > 0
         ? connectors
@@ -162,9 +221,23 @@ export async function runInit(options: InitOptions): Promise<void> {
           ],
   };
 
+  // Persist provider choice + env var name only (never the key value).
+  const configForDisk = {
+    ...config,
+    model: {
+      provider: model.provider,
+      api_key_env: model.api_key_env,
+      ...(model.model ? { model: model.model } : {}),
+    },
+  };
+
   const configPath = join(options.cwd, 'patch.config.json');
-  writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`, 'utf8');
+  writeFileSync(configPath, `${JSON.stringify(configForDisk, null, 2)}\n`, 'utf8');
   console.log(`Wrote ${configPath}`);
+  console.log(
+    `Model provider: ${model.provider} (key from $${model.api_key_env})`,
+  );
+  printKeySetup(model);
 
   mkdirSync(join(options.cwd, '.patch'), { recursive: true });
   const rulesPath = writeDefaultRulesFile(options.cwd);
@@ -177,7 +250,7 @@ export async function runInit(options: InitOptions): Promise<void> {
     }
   }
 
-  const workflow = scaffoldWorkflow(options.cwd);
+  const workflow = scaffoldWorkflow(options.cwd, model.api_key_env);
   console.log(`Scaffolded ${workflow}`);
 
   const installUrl = readGithubAppInstallUrl();
@@ -185,7 +258,9 @@ export async function runInit(options: InitOptions): Promise<void> {
   console.log('Next steps:');
   console.log(`  1. Install the Patch GitHub App on this repo: ${installUrl}`);
   console.log('     (create the App once — see docs/github-app.md)');
-  console.log('  2. Add secrets: ANTHROPIC_API_KEY, PATCH_GITHUB_APP_ID, PATCH_GITHUB_APP_PRIVATE_KEY');
+  console.log(
+    `  2. Add secrets: ${model.api_key_env}, PATCH_GITHUB_APP_ID, PATCH_GITHUB_APP_PRIVATE_KEY`,
+  );
   console.log('  3. Wait for the scheduled Action or run:');
-  console.log('       npx -y @patch-dev/cli scan');
+  console.log('       npx patch scan');
 }

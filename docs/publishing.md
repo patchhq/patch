@@ -5,11 +5,10 @@ The CLI is the only npm-published package. Workspace libraries (`@patch-dev/core
 ## Install / run (consumers)
 
 ```bash
-# Preferred — scoped package (avoids the unrelated npm package named `patch`)
-npx -y @patch-dev/cli init
-npx -y @patch-dev/cli scan --dry-run
+npx patch init
+npx patch scan --dry-run
 
-# Equivalent — install package, invoke the `patch` bin
+# If `npx patch` resolves to the unrelated npm package named `patch`:
 npx -y --package=@patch-dev/cli patch init
 ```
 

@@ -236,7 +236,7 @@ function buildTerminalLines(frame: number): Array<{ text: string; color: string 
   const push = (at: number, text: string, color = colors.paper) => {
     if (frame >= at) out.push({ text, color });
   };
-  push(275, '$ npx -y @patch-dev/cli scan --dry-run', colors.mist);
+  push(275, '$ npx patch scan --dry-run', colors.mist);
   push(300, 'Patch scan — 1 connector(s), languages: typescript', colors.paper);
   push(320, '', colors.paper);
   push(330, '▸ fixture-fake-api (package-diff)', colors.amber);
@@ -393,7 +393,7 @@ const Closing: React.FC<{ frame: number }> = ({ frame }) => {
             letterSpacing: '0.01em',
           }}
         >
-          npx -y @patch-dev/cli init
+          npx patch init
         </div>
         <div
           style={{

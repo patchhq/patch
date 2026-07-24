@@ -6,13 +6,13 @@
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](./LICENSE)
 
 ```bash
-npx -y @patch-dev/cli init
+npx patch init
 ```
 
 Confirms connectors → writes `patch.config.json` → scaffolds a GitHub Action.  
 Then scheduled `patch scan` opens a **PR** or **Issue** when an API breaks.
 
-> Prefer the scoped package `@patch-dev/cli` — the unscoped npm name `patch` is unrelated.
+> Install/run via `@patch-dev/cli` (the unscoped npm name `patch` is a different package). Equivalent: `npx -y --package=@patch-dev/cli patch init`.
 
 ## Demo
 
@@ -26,14 +26,36 @@ Or open [`docs/demo/patch-demo.mp4`](./docs/demo/patch-demo.mp4) in the repo.
 
 ```bash
 # In your TS/JS repo
-npx -y @patch-dev/cli init --yes
-npx -y @patch-dev/cli scan --dry-run
+npx patch init --yes
+npx patch scan --dry-run
 ```
 
 | Env | Purpose |
 |-----|---------|
-| `ANTHROPIC_API_KEY` | LLM classify/fix (heuristics without it) |
+| `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` | LLM classify/fix (required — see below) |
 | `GITHUB_TOKEN` or Patch GitHub App | Open PRs/Issues (else `.patch/reports/`) — [docs/github-app.md](./docs/github-app.md) |
+
+## Model providers
+
+Classify and fix call a pluggable provider. Choose one in `patch.config.json` (never store the API key in that file):
+
+```json
+{
+  "model": {
+    "provider": "anthropic",
+    "api_key_env": "ANTHROPIC_API_KEY"
+  }
+}
+```
+
+| Provider | `provider` value | Env var | Get a key |
+|----------|------------------|---------|-----------|
+| Anthropic (Claude) | `anthropic` | `ANTHROPIC_API_KEY` | [console.anthropic.com/settings/keys](https://console.anthropic.com/settings/keys) |
+| OpenAI (GPT / Codex-style) | `openai` | `OPENAI_API_KEY` | [platform.openai.com/api-keys](https://platform.openai.com/api-keys) |
+
+`patch init` asks which provider to use and tells you what to set if the env var is missing. `patch scan` fails immediately with a clear message if that key is unset.
+
+Optional: set `"model": "gpt-4o"` (or a Claude model id) under `model` to override the default.
 
 ## How it works
 
@@ -84,6 +106,7 @@ packages/scanner-*      TS implemented; python/rust/go stubs
 packages/connectors/*   openapi-diff, doc-scrape, package-diff
 packages/classify       RawChange → ChangeEvent
 packages/fix           agentic fix + validation
+packages/model          Anthropic / OpenAI ModelProvider
 packages/github-app     PR/Issue publisher
 apps/backend            hosted scheduler (optional)
 examples/fixture-repo   E2E target

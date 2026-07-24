@@ -11,6 +11,7 @@ export {
   toUnifiedHint,
   fromUnifiedHint,
   heuristicProposeFix,
+  providerProposeFix,
   claudeProposeFix,
   type AgenticFixOptions,
   type FixAttemptRecord,
@@ -60,9 +61,8 @@ import {
 import { validateProject } from './validators.js';
 
 export interface GenerateFixOptions {
-  apiKey?: string;
-  model?: string;
   repoRoot: string;
+  provider?: import('@patch-dev/model').ModelProvider;
 }
 
 /**
@@ -77,8 +77,7 @@ export async function generateFix(
 ): Promise<PatchResult> {
   const validated = await generateAndValidateFix(event, instruction, site, {
     repoRoot: options.repoRoot,
-    apiKey: options.apiKey,
-    model: options.model,
+    provider: options.provider,
     maxAttempts: 1,
   });
   return PatchResultSchema.parse({

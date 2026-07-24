@@ -33,7 +33,7 @@ pnpm studio
 
 1. Brand open — **Patch**
 2. `ChargeOptions.currency` optional → required
-3. Terminal: `npx -y @patch-dev/cli scan --dry-run` + match sites
+3. Terminal: `npx patch scan --dry-run` + match sites
 4. Local report (Issue path / 55% heuristic)
 5. Close on install CTA
 

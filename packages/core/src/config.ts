@@ -21,6 +21,28 @@ export const ConnectorConfigSchema = z.object({
 });
 export type ConnectorConfig = z.infer<typeof ConnectorConfigSchema>;
 
+/**
+ * LLM provider selection. Stores provider + env var *name* only — never the key.
+ */
+export const ModelConfigSchema = z
+  .object({
+    provider: z.enum(['anthropic', 'openai']).default('anthropic'),
+    api_key_env: z.string().min(1).optional(),
+    model: z.string().min(1).optional(),
+  })
+  .default({})
+  .transform((raw) => {
+    const provider = raw.provider ?? 'anthropic';
+    const api_key_env =
+      raw.api_key_env ??
+      (provider === 'openai' ? 'OPENAI_API_KEY' : 'ANTHROPIC_API_KEY');
+    const model =
+      raw.model ??
+      (provider === 'openai' ? 'gpt-4o' : 'claude-sonnet-4-20250514');
+    return { provider, api_key_env, model } as const;
+  });
+export type ModelConfig = z.infer<typeof ModelConfigSchema>;
+
 export const PatchConfigSchema = z.object({
   version: z.literal(1).default(1),
   confidence_threshold: z.number().min(0).max(1).default(0.7),
@@ -39,6 +61,8 @@ export const PatchConfigSchema = z.object({
   disable_default_rules: z.array(z.string()).optional(),
   /** Max fix attempts in the agentic validation loop (default 3). */
   max_fix_attempts: z.number().int().min(1).max(5).default(3),
+  /** Classify / fix LLM provider (key lives in the named env var only). */
+  model: ModelConfigSchema,
   connectors: z.array(ConnectorConfigSchema).min(1),
 });
 export type PatchConfig = z.infer<typeof PatchConfigSchema>;
@@ -47,7 +71,7 @@ export function loadConfig(cwd: string = process.cwd()): PatchConfig {
   const path = resolve(cwd, 'patch.config.json');
   if (!existsSync(path)) {
     throw new Error(
-      `No patch.config.json found in ${cwd}. Run \`npx -y @patch-dev/cli init\` first.`,
+      `No patch.config.json found in ${cwd}. Run \`npx patch init\` first.`,
     );
   }
   const raw = JSON.parse(readFileSync(path, 'utf8')) as unknown;
