@@ -10,11 +10,18 @@ import {
 import { colors, fonts } from './theme';
 
 export const DEMO_FPS = 30;
-export const DEMO_DURATION_FRAMES = 30 * 42; // 42s
+/** ~40s silent product explainer */
+export const DEMO_DURATION_FRAMES = 30 * 40;
 export const DEMO_WIDTH = 1920;
 export const DEMO_HEIGHT = 1080;
 
-function fade(frame: number, inStart: number, inEnd: number, outStart: number, outEnd: number) {
+function fade(
+  frame: number,
+  inStart: number,
+  inEnd: number,
+  outStart: number,
+  outEnd: number,
+) {
   return (
     interpolate(frame, [inStart, inEnd], [0, 1], {
       extrapolateLeft: 'clamp',
@@ -41,7 +48,7 @@ const Atmosphere: React.FC = () => (
   >
     <AbsoluteFill
       style={{
-        opacity: 0.35,
+        opacity: 0.3,
         backgroundImage: `linear-gradient(${colors.line} 1px, transparent 1px), linear-gradient(90deg, ${colors.line} 1px, transparent 1px)`,
         backgroundSize: '64px 64px',
         maskImage: 'radial-gradient(ellipse at center, black 20%, transparent 75%)',
@@ -50,9 +57,10 @@ const Atmosphere: React.FC = () => (
   </AbsoluteFill>
 );
 
-const BrandMark: React.FC<{ frame: number }> = ({ frame }) => {
-  const op = fade(frame, 0, 18, 55, 75);
-  const y = interpolate(frame, [0, 30], [24, 0], {
+/** 0–4s — brand + one-line promise */
+const Open: React.FC<{ frame: number }> = ({ frame }) => {
+  const op = fade(frame, 0, 18, 95, 120);
+  const y = interpolate(frame, [0, 28], [28, 0], {
     extrapolateRight: 'clamp',
     easing: Easing.out(Easing.cubic),
   });
@@ -65,13 +73,13 @@ const BrandMark: React.FC<{ frame: number }> = ({ frame }) => {
         transform: `translateY(${y}px)`,
       }}
     >
-      <div style={{ textAlign: 'center' }}>
+      <div style={{ textAlign: 'center', maxWidth: 1100 }}>
         <div
           style={{
             fontFamily: fonts.display,
             fontStyle: 'italic',
             fontWeight: 800,
-            fontSize: 132,
+            fontSize: 128,
             letterSpacing: '-0.04em',
             color: colors.paper,
             lineHeight: 1,
@@ -81,279 +89,402 @@ const BrandMark: React.FC<{ frame: number }> = ({ frame }) => {
         </div>
         <div
           style={{
-            marginTop: 22,
+            marginTop: 28,
             fontFamily: fonts.body,
             fontWeight: 400,
-            fontSize: 22,
+            fontSize: 28,
             color: colors.mist,
-            letterSpacing: '0.02em',
+            lineHeight: 1.45,
           }}
         >
-          upstream API breaks → fixed call sites
+          When upstream APIs or dependencies change,
+          <br />
+          Patch finds the breakage and opens a fix.
         </div>
       </div>
     </AbsoluteFill>
   );
 };
 
-const CodePanel: React.FC<{ frame: number }> = ({ frame }) => {
-  const op = fade(frame, 80, 100, 240, 265);
-  const broken = frame >= 130;
+/** 4–10s — the problem, simplified */
+const Problem: React.FC<{ frame: number }> = ({ frame }) => {
+  const op = fade(frame, 110, 135, 270, 300);
+  const { fps } = useVideoConfig();
+  const a = spring({ frame: frame - 130, fps, config: { damping: 18 } });
+  const b = spring({ frame: frame - 160, fps, config: { damping: 18 } });
+
   return (
-    <div
-      style={{
-        position: 'absolute',
-        left: 96,
-        top: 160,
-        width: 760,
-        opacity: op,
-        borderRadius: 16,
-        border: `1px solid ${colors.panelEdge}`,
-        background: colors.panel,
-        boxShadow: '0 30px 80px rgba(0,0,0,0.45)',
-        overflow: 'hidden',
-        fontFamily: fonts.data,
-        fontWeight: 500,
-      }}
-    >
-      <div
-        style={{
-          display: 'flex',
-          gap: 8,
-          padding: '14px 18px',
-          borderBottom: `1px solid ${colors.panelEdge}`,
-          color: colors.mist,
-          fontSize: 14,
-          fontWeight: 500,
-        }}
-      >
-        <span style={{ color: colors.danger }}>●</span>
-        <span style={{ color: colors.amber }}>●</span>
-        <span style={{ color: colors.mint }}>●</span>
-        <span style={{ marginLeft: 12 }}>fake-api-client / ChargeOptions</span>
-      </div>
-      <div style={{ padding: '28px 32px', fontSize: 22, lineHeight: 1.65, color: colors.paper }}>
-        <div>
-          <span style={{ color: colors.mist }}>export interface</span>{' '}
-          <span style={{ color: colors.amber }}>ChargeOptions</span> {'{'}
-        </div>
-        <div style={{ paddingLeft: 28 }}>
-          amount: <span style={{ color: colors.mint }}>number</span>;
+    <AbsoluteFill style={{ opacity: op, justifyContent: 'center', alignItems: 'center' }}>
+      <div style={{ width: 1200 }}>
+        <div
+          style={{
+            fontFamily: fonts.data,
+            fontWeight: 500,
+            fontSize: 16,
+            letterSpacing: '0.14em',
+            color: colors.amber,
+            marginBottom: 18,
+          }}
+        >
+          THE PROBLEM
         </div>
         <div
           style={{
-            paddingLeft: 28,
-            marginTop: 6,
-            padding: '8px 12px',
-            marginLeft: 12,
-            borderRadius: 8,
-            background: broken ? 'rgba(224,112,96,0.12)' : 'rgba(232,165,75,0.08)',
-            border: `1px solid ${broken ? 'rgba(224,112,96,0.35)' : 'rgba(232,165,75,0.25)'}`,
+            fontFamily: fonts.display,
+            fontStyle: 'italic',
+            fontWeight: 800,
+            fontSize: 56,
+            color: colors.paper,
+            letterSpacing: '-0.03em',
+            lineHeight: 1.15,
+            marginBottom: 48,
           }}
         >
-          {broken ? (
-            <>
-              currency: <span style={{ color: colors.mint }}>string</span>;
-              <span style={{ color: colors.danger, marginLeft: 16, fontSize: 16 }}>
-                // required in v1.1
-              </span>
-            </>
-          ) : (
-            <>
-              currency?: <span style={{ color: colors.mint }}>string</span>;
-              <span style={{ color: colors.mist, marginLeft: 16, fontSize: 16 }}>
-                // optional in v1.0
-              </span>
-            </>
-          )}
+          Your dependencies move.
+          <br />
+          Your code doesn&apos;t.
         </div>
-        <div>{'}'}</div>
+        <div style={{ display: 'flex', gap: 28 }}>
+          <SimplePanel
+            progress={a}
+            title="API breaks"
+            body="A required field appears. A method renames. Call sites stop compiling."
+          />
+          <SimplePanel
+            progress={b}
+            title="Stale packages"
+            body="Versions drift. Advisories land. Lockfiles fall behind."
+          />
+        </div>
       </div>
-    </div>
+    </AbsoluteFill>
   );
 };
 
-const Terminal: React.FC<{ frame: number }> = ({ frame }) => {
-  const op = fade(frame, 250, 275, 930, 960);
-  const lines = buildTerminalLines(frame);
-  return (
+const SimplePanel: React.FC<{
+  progress: number;
+  title: string;
+  body: string;
+}> = ({ progress, title, body }) => (
+  <div
+    style={{
+      flex: 1,
+      opacity: progress,
+      transform: `translateY(${(1 - progress) * 24}px)`,
+      borderRadius: 16,
+      border: `1px solid ${colors.panelEdge}`,
+      background: colors.panel,
+      padding: '28px 30px',
+    }}
+  >
     <div
       style={{
-        position: 'absolute',
-        right: 88,
-        top: 140,
-        width: 860,
-        height: 620,
-        opacity: op,
-        borderRadius: 16,
-        border: `1px solid ${colors.panelEdge}`,
-        background: '#0a0f0d',
-        boxShadow: '0 30px 80px rgba(0,0,0,0.5)',
-        overflow: 'hidden',
+        fontFamily: fonts.display,
+        fontStyle: 'italic',
+        fontWeight: 800,
+        fontSize: 28,
+        color: colors.paper,
+        marginBottom: 12,
+      }}
+    >
+      {title}
+    </div>
+    <div
+      style={{
+        fontFamily: fonts.body,
+        fontWeight: 400,
+        fontSize: 20,
+        color: colors.mist,
+        lineHeight: 1.5,
+      }}
+    >
+      {body}
+    </div>
+  </div>
+);
+
+/** 10–22s — how it works in four plain steps */
+const HowItWorks: React.FC<{ frame: number }> = ({ frame }) => {
+  const op = fade(frame, 290, 315, 640, 670);
+  const steps = [
+    { t: 'Watch', d: 'Connectors watch specs, SDKs, and package.json.' },
+    { t: 'Detect', d: 'Patch diffs what changed since the last scan.' },
+    { t: 'Fix', d: 'It proposes a patch and type-checks it in a sandbox.' },
+    { t: 'Ship', d: 'Confident? Pull request. Unsure? GitHub Issue.' },
+  ];
+
+  return (
+    <AbsoluteFill style={{ opacity: op, justifyContent: 'center', alignItems: 'center' }}>
+      <div style={{ width: 1180 }}>
+        <div
+          style={{
+            fontFamily: fonts.data,
+            fontWeight: 500,
+            fontSize: 16,
+            letterSpacing: '0.14em',
+            color: colors.mint,
+            marginBottom: 18,
+          }}
+        >
+          HOW IT WORKS
+        </div>
+        <div
+          style={{
+            fontFamily: fonts.display,
+            fontStyle: 'italic',
+            fontWeight: 800,
+            fontSize: 52,
+            color: colors.paper,
+            letterSpacing: '-0.03em',
+            marginBottom: 40,
+          }}
+        >
+          Four steps. One scheduled scan.
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+          {steps.map((step, i) => {
+            const appear = 330 + i * 55;
+            const p = interpolate(frame, [appear, appear + 20], [0, 1], {
+              extrapolateLeft: 'clamp',
+              extrapolateRight: 'clamp',
+              easing: Easing.out(Easing.cubic),
+            });
+            return (
+              <div
+                key={step.t}
+                style={{
+                  opacity: p,
+                  transform: `translateX(${(1 - p) * 28}px)`,
+                  display: 'flex',
+                  alignItems: 'baseline',
+                  gap: 28,
+                  padding: '18px 24px',
+                  borderRadius: 12,
+                  border: `1px solid ${colors.panelEdge}`,
+                  background: 'rgba(20, 28, 24, 0.85)',
+                }}
+              >
+                <div
+                  style={{
+                    fontFamily: fonts.data,
+                    fontWeight: 500,
+                    fontSize: 18,
+                    color: colors.amber,
+                    width: 36,
+                  }}
+                >
+                  {String(i + 1).padStart(2, '0')}
+                </div>
+                <div
+                  style={{
+                    fontFamily: fonts.display,
+                    fontStyle: 'italic',
+                    fontWeight: 800,
+                    fontSize: 30,
+                    color: colors.paper,
+                    width: 140,
+                  }}
+                >
+                  {step.t}
+                </div>
+                <div
+                  style={{
+                    fontFamily: fonts.body,
+                    fontWeight: 400,
+                    fontSize: 22,
+                    color: colors.mist,
+                    flex: 1,
+                  }}
+                >
+                  {step.d}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </AbsoluteFill>
+  );
+};
+
+/** 22–30s — what Patch covers */
+const Covers: React.FC<{ frame: number }> = ({ frame }) => {
+  const op = fade(frame, 660, 685, 870, 900);
+  const { fps } = useVideoConfig();
+  const left = spring({ frame: frame - 690, fps, config: { damping: 16 } });
+  const right = spring({ frame: frame - 720, fps, config: { damping: 16 } });
+
+  return (
+    <AbsoluteFill style={{ opacity: op, justifyContent: 'center', alignItems: 'center' }}>
+      <div style={{ width: 1200 }}>
+        <div
+          style={{
+            fontFamily: fonts.data,
+            fontWeight: 500,
+            fontSize: 16,
+            letterSpacing: '0.14em',
+            color: colors.amber,
+            marginBottom: 18,
+          }}
+        >
+          WHAT PATCH FIXES
+        </div>
+        <div
+          style={{
+            fontFamily: fonts.display,
+            fontStyle: 'italic',
+            fontWeight: 800,
+            fontSize: 48,
+            color: colors.paper,
+            letterSpacing: '-0.03em',
+            marginBottom: 40,
+          }}
+        >
+          Two jobs. Same bot.
+        </div>
+        <div style={{ display: 'flex', gap: 28 }}>
+          <CoverCard
+            progress={left}
+            kicker="Call sites"
+            title="API breaking changes"
+            lines={[
+              'OpenAPI / SDK / docs connectors',
+              'Finds every createCharge-style usage',
+              'Rewrites the call, then typechecks',
+            ]}
+          />
+          <CoverCard
+            progress={right}
+            kicker="package.json"
+            title="Dependency updates"
+            lines={[
+              'Dependabot-style version bumps',
+              'Patch + minor by default',
+              'OSV security advisories → PRs',
+            ]}
+          />
+        </div>
+      </div>
+    </AbsoluteFill>
+  );
+};
+
+const CoverCard: React.FC<{
+  progress: number;
+  kicker: string;
+  title: string;
+  lines: string[];
+}> = ({ progress, kicker, title, lines }) => (
+  <div
+    style={{
+      flex: 1,
+      opacity: progress,
+      transform: `translateY(${(1 - progress) * 20}px)`,
+      borderRadius: 16,
+      border: `1px solid ${colors.panelEdge}`,
+      background: colors.panel,
+      padding: '32px 34px',
+      minHeight: 320,
+    }}
+  >
+    <div
+      style={{
         fontFamily: fonts.data,
         fontWeight: 500,
+        fontSize: 14,
+        letterSpacing: '0.1em',
+        color: colors.mint,
+        marginBottom: 10,
       }}
     >
-      <div
-        style={{
-          padding: '14px 18px',
-          borderBottom: `1px solid ${colors.panelEdge}`,
-          color: colors.mist,
-          fontSize: 14,
-          display: 'flex',
-          justifyContent: 'space-between',
-          fontWeight: 500,
-        }}
-      >
-        <span>patch scan — dry-run</span>
-        <span style={{ color: colors.amber }}>@patch-dev/cli</span>
-      </div>
-      <div style={{ padding: '22px 26px', fontSize: 18, lineHeight: 1.55 }}>
-        {lines.map((l, i) => (
-          <div key={i} style={{ color: l.color, whiteSpace: 'pre' }}>
-            {l.text}
-          </div>
-        ))}
-        {frame > 280 && frame < 900 && (
-          <div
-            style={{
-              display: 'inline-block',
-              width: 10,
-              height: 18,
-              marginTop: 4,
-              background: colors.mint,
-              opacity: frame % 20 < 10 ? 1 : 0.2,
-            }}
-          />
-        )}
-      </div>
+      {kicker.toUpperCase()}
     </div>
-  );
-};
-
-function buildTerminalLines(frame: number): Array<{ text: string; color: string }> {
-  const out: Array<{ text: string; color: string }> = [];
-  const push = (at: number, text: string, color = colors.paper) => {
-    if (frame >= at) out.push({ text, color });
-  };
-  push(275, '$ npx patch scan --dry-run', colors.mist);
-  push(300, 'Patch scan — 1 connector(s), languages: typescript', colors.paper);
-  push(320, '', colors.paper);
-  push(330, '▸ fixture-fake-api (package-diff)', colors.amber);
-  push(350, '  4 raw change(s)', colors.mist);
-  push(370, '  classified 1 event(s), 1 fix instruction(s)', colors.paper);
-  push(400, '  ChargeOptions: 4 match site(s)', colors.mint);
-  push(440, '    consumer-default.ts:6  confidence=55%  ✓', colors.paper);
-  push(470, '    consumer-named.ts:6    confidence=55%  ✓', colors.paper);
-  push(500, '    consumer-namespace.ts:6 confidence=55%  ✓', colors.paper);
-  push(530, '    consumer-wrapper.ts:6  confidence=55%  ✓', colors.paper);
-  push(580, '  dry-run report: .patch/reports/…md', colors.amber);
-  push(620, '', colors.paper);
-  push(640, 'Done.', colors.mint);
-  return out;
-}
-
-const Report: React.FC<{ frame: number }> = ({ frame }) => {
-  const op = fade(frame, 640, 670, 920, 950);
-  const { fps } = useVideoConfig();
-  const reveal = spring({
-    frame: frame - 670,
-    fps,
-    config: { damping: 200, stiffness: 80 },
-  });
-  return (
     <div
       style={{
-        position: 'absolute',
-        left: 110,
-        bottom: 90,
-        width: 720,
-        opacity: op,
-        transform: `translateY(${(1 - reveal) * 40}px)`,
-        borderRadius: 16,
-        border: `1px solid ${colors.panelEdge}`,
-        background: colors.panel,
-        boxShadow: '0 24px 70px rgba(0,0,0,0.45)',
-        padding: '28px 32px',
+        fontFamily: fonts.display,
+        fontStyle: 'italic',
+        fontWeight: 800,
+        fontSize: 32,
+        color: colors.paper,
+        marginBottom: 22,
       }}
     >
+      {title}
+    </div>
+    {lines.map((line) => (
       <div
-        style={{
-          fontFamily: fonts.data,
-          fontWeight: 500,
-          color: colors.amber,
-          fontSize: 14,
-          letterSpacing: '0.08em',
-          marginBottom: 12,
-        }}
-      >
-        LOCAL REPORT · BELOW PR THRESHOLD
-      </div>
-      <div
-        style={{
-          fontFamily: fonts.display,
-          fontStyle: 'italic',
-          fontWeight: 800,
-          fontSize: 36,
-          color: colors.paper,
-          letterSpacing: '-0.02em',
-          marginBottom: 18,
-        }}
-      >
-        currency is now required
-      </div>
-      <div
+        key={line}
         style={{
           fontFamily: fonts.body,
           fontWeight: 400,
+          fontSize: 20,
           color: colors.mist,
-          fontSize: 17,
-          lineHeight: 1.6,
+          lineHeight: 1.55,
+          marginBottom: 10,
+          paddingLeft: 16,
+          borderLeft: `2px solid ${colors.panelEdge}`,
         }}
       >
-        Patch found every{' '}
-        <span style={{ fontFamily: fonts.data, fontWeight: 500, color: colors.mint }}>
-          createCharge
-        </span>{' '}
-        call site, proposed adding{' '}
-        <span style={{ fontFamily: fonts.data, fontWeight: 500, color: colors.amber }}>
-          currency: 'usd'
-        </span>
-        , and type-checked each fix. Heuristic confidence 55% → Issue path (not auto-PR).
+        {line}
       </div>
-      <div
-        style={{
-          marginTop: 22,
-          display: 'flex',
-          gap: 10,
-          flexWrap: 'wrap',
-          fontFamily: fonts.data,
-          fontWeight: 500,
-        }}
-      >
-        {['4 sites', 'tsc ✓', 'attempt 1', 'dry-run'].map((t) => (
-          <span
-            key={t}
-            style={{
-              fontSize: 14,
-              color: colors.paper,
-              border: `1px solid ${colors.panelEdge}`,
-              borderRadius: 999,
-              padding: '6px 12px',
-              background: 'rgba(255,255,255,0.03)',
-            }}
-          >
-            {t}
-          </span>
-        ))}
+    ))}
+  </div>
+);
+
+/** 30–36s — outcome */
+const Outcome: React.FC<{ frame: number }> = ({ frame }) => {
+  const op = fade(frame, 890, 915, 1050, 1080);
+  return (
+    <AbsoluteFill style={{ opacity: op, justifyContent: 'center', alignItems: 'center' }}>
+      <div style={{ textAlign: 'center', maxWidth: 1000 }}>
+        <div
+          style={{
+            fontFamily: fonts.data,
+            fontWeight: 500,
+            fontSize: 16,
+            letterSpacing: '0.14em',
+            color: colors.mint,
+            marginBottom: 20,
+          }}
+        >
+          THE OUTCOME
+        </div>
+        <div
+          style={{
+            fontFamily: fonts.display,
+            fontStyle: 'italic',
+            fontWeight: 800,
+            fontSize: 56,
+            color: colors.paper,
+            letterSpacing: '-0.03em',
+            lineHeight: 1.2,
+            marginBottom: 36,
+          }}
+        >
+          A PR when it&apos;s sure.
+          <br />
+          An Issue when it isn&apos;t.
+        </div>
+        <div
+          style={{
+            fontFamily: fonts.body,
+            fontWeight: 400,
+            fontSize: 24,
+            color: colors.mist,
+            lineHeight: 1.5,
+          }}
+        >
+          Confidence comes from real validation — not a guess.
+        </div>
       </div>
-    </div>
+    </AbsoluteFill>
   );
 };
 
+/** 36–40s — CTA */
 const Closing: React.FC<{ frame: number }> = ({ frame }) => {
-  const op = fade(frame, 950, 980, DEMO_DURATION_FRAMES - 5, DEMO_DURATION_FRAMES);
-  const y = interpolate(frame, [950, 990], [28, 0], {
+  const op = fade(frame, 1070, 1100, DEMO_DURATION_FRAMES - 8, DEMO_DURATION_FRAMES);
+  const y = interpolate(frame, [1070, 1110], [24, 0], {
     extrapolateRight: 'clamp',
     easing: Easing.out(Easing.cubic),
   });
@@ -372,7 +503,7 @@ const Closing: React.FC<{ frame: number }> = ({ frame }) => {
             fontFamily: fonts.display,
             fontStyle: 'italic',
             fontWeight: 800,
-            fontSize: 88,
+            fontSize: 84,
             color: colors.paper,
             letterSpacing: '-0.03em',
           }}
@@ -381,26 +512,36 @@ const Closing: React.FC<{ frame: number }> = ({ frame }) => {
         </div>
         <div
           style={{
-            marginTop: 28,
+            marginTop: 18,
+            fontFamily: fonts.body,
+            fontWeight: 400,
+            fontSize: 22,
+            color: colors.mist,
+          }}
+        >
+          Init once. Scan on a schedule. Review the PR.
+        </div>
+        <div
+          style={{
+            marginTop: 32,
             display: 'inline-block',
             fontFamily: fonts.data,
             fontWeight: 500,
-            fontSize: 26,
+            fontSize: 28,
             color: colors.ink,
             background: colors.amber,
-            padding: '16px 28px',
+            padding: '18px 32px',
             borderRadius: 12,
-            letterSpacing: '0.01em',
           }}
         >
           npx patch init
         </div>
         <div
           style={{
-            marginTop: 22,
-            fontFamily: fonts.body,
-            fontWeight: 400,
-            fontSize: 18,
+            marginTop: 20,
+            fontFamily: fonts.data,
+            fontWeight: 500,
+            fontSize: 16,
             color: colors.mist,
           }}
         >
@@ -417,10 +558,11 @@ export const Demo: React.FC = () => {
   return (
     <AbsoluteFill style={{ backgroundColor: colors.ink }}>
       <Atmosphere />
-      <BrandMark frame={frame} />
-      <CodePanel frame={frame} />
-      <Terminal frame={frame} />
-      <Report frame={frame} />
+      <Open frame={frame} />
+      <Problem frame={frame} />
+      <HowItWorks frame={frame} />
+      <Covers frame={frame} />
+      <Outcome frame={frame} />
       <Closing frame={frame} />
       <AbsoluteFill
         style={{

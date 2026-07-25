@@ -1,6 +1,6 @@
 # Demo assets
 
-- [`patch-demo.mp4`](./patch-demo.mp4) — silent product walkthrough (H.264 Main / yuv420p, plays in common players).
+- [`patch-demo.mp4`](./patch-demo.mp4) — ~40s silent product explainer (H.264 Main / yuv420p).
 
 Rebuild from Remotion:
 

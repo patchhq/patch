@@ -1,7 +1,7 @@
-# Patch demo video (silent, auto-zoom)
+# Patch demo video (silent explainer)
 
-Professional 42s silent walkthrough rendered with [Remotion](https://www.remotion.dev/).
-No narration — camera zooms guide attention through the break → scan → report → CTA.
+~40s silent walkthrough rendered with [Remotion](https://www.remotion.dev/).
+No narration — simple beats explain **what Patch is** and **how it works**.
 
 ## Render
 
@@ -29,12 +29,13 @@ pnpm studio
 - **Data** — JetBrains Mono 500  
 - **Body** — Inter  
 
-## Shots
+## Beats (~40s)
 
-1. Brand open — **Patch**
-2. `ChargeOptions.currency` optional → required
-3. Terminal: `npx patch scan --dry-run` + match sites
-4. Local report (Issue path / 55% heuristic)
-5. Close on install CTA
+1. Brand — what Patch does in one sentence  
+2. Problem — APIs break, packages go stale  
+3. How it works — Watch → Detect → Fix → Ship  
+4. What it covers — call-site API fixes + dependency updates  
+5. Outcome — PR when sure, Issue when not  
+6. CTA — `npx patch init`
 
 Requires **ffmpeg** on PATH.

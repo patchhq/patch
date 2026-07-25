@@ -16,7 +16,7 @@ Then scheduled `patch scan` opens a **PR** or **Issue** when an API breaks.
 
 ## Demo
 
-Silent walkthrough (break → scan → report → install):
+Silent walkthrough (what it is → how it works → install):
 
 https://github.com/patchhq/patch/raw/main/docs/demo/patch-demo.mp4
 
