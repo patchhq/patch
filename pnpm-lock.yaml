@@ -30,37 +30,6 @@ importers:
         specifier: ^2.1.8
         version: 2.1.9(@types/node@22.20.1)
 
-  apps/backend:
-    dependencies:
-      '@patch-dev/classify':
-        specifier: workspace:*
-        version: link:../../packages/classify
-      '@patch-dev/connector-doc-scrape':
-        specifier: workspace:*
-        version: link:../../packages/connectors/doc-scrape
-      '@patch-dev/connector-openapi-diff':
-        specifier: workspace:*
-        version: link:../../packages/connectors/openapi-diff
-      '@patch-dev/connector-package-diff':
-        specifier: workspace:*
-        version: link:../../packages/connectors/package-diff
-      '@patch-dev/core':
-        specifier: workspace:*
-        version: link:../../packages/core
-      '@patch-dev/fix':
-        specifier: workspace:*
-        version: link:../../packages/fix
-      '@patch-dev/github-app':
-        specifier: workspace:*
-        version: link:../../packages/github-app
-      '@patch-dev/scanner-ts':
-        specifier: workspace:*
-        version: link:../../packages/scanner-ts
-    devDependencies:
-      vitest:
-        specifier: ^2.1.8
-        version: 2.1.9(@types/node@22.20.1)
-
   examples/fake-api-client: {}
 
   examples/fixture-repo:

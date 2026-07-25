@@ -106,12 +106,11 @@ Details: [examples/dogfood.md](./examples/dogfood.md).
 packages/cli            @patch-dev/cli (published; bundles the rest)
 packages/core           schemas + connector + LanguageScanner interfaces
 packages/scanner-*      TS implemented; python/rust/go stubs
-packages/connectors/*   openapi-diff, doc-scrape, package-diff
+packages/connectors/*   openapi-diff, doc-scrape, package-diff, dependency-update
 packages/classify       RawChange → ChangeEvent
 packages/fix           agentic fix + validation
 packages/model          Anthropic / OpenAI ModelProvider
 packages/github-app     PR/Issue publisher
-apps/backend            hosted scheduler (optional)
 examples/fixture-repo   E2E target
 demos/video             Remotion source for the demo MP4
 ```
@@ -125,12 +124,6 @@ pnpm test
 Publishing the CLI: [docs/publishing.md](./docs/publishing.md).  
 GitHub App (PRs/Issues): [docs/github-app.md](./docs/github-app.md).  
 Contributing: [CONTRIBUTING.md](./CONTRIBUTING.md).
-
-## Open source vs hosted
-
-**Open source (Apache-2.0):** CLI, connectors, scanners, schemas, PR templates — this repo.
-
-**Hosted (optional):** cross-customer scheduler, billed Claude calls, certified connector packs.
 
 ## Known MVP limitations
 

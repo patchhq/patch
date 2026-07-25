@@ -26,7 +26,6 @@ Requires Node 20+ and pnpm 9+.
 | `packages/classify` | RawChange → ChangeEvent (+ FixInstruction) |
 | `packages/fix` | Fix generation + per-language validation |
 | `packages/github-app` | PR / Issue publisher |
-| `apps/backend` | Hosted scheduler (orchestration) |
 | `examples/fixture-repo` | End-to-end test target |
 | `examples/dogfood.mjs` | One-shot baseline → break → scan |
 | `docs/demo/patch-demo.mp4` | Silent product demo video |

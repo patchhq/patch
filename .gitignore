@@ -6,6 +6,8 @@ dist/
 .env
 .env.*
 !.env.example
+*.pem
+*.key
 *.db
 *.sqlite
 *.sqlite3
@@ -16,5 +18,5 @@ coverage/
 .pnpm-store/
 *.tgz
 package.json.prepack-backup
-demos/video/out/*.raw.mp4
+demos/video/out/
 demos/video/.remotion/

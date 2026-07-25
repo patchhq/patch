@@ -24,8 +24,8 @@ interface StoreFile {
  *   snapshots(connector_id, content_hash, raw_content, fetched_at)
  *   change_event_links(change_event_id, github_url, kind, created_at)
  *
- * Pure JS — no native addons. Suitable for CLI MVP; the hosted backend
- * can swap in a real DB without changing the SnapshotStore interface.
+ * Pure JS — no native addons. Suitable for the CLI; swap in another
+ * SnapshotStore implementation if you need a different backing store.
  */
 export class SqliteSnapshotStore implements SnapshotStore {
   private readonly path: string;
