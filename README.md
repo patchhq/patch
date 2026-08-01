@@ -22,6 +22,16 @@ https://github.com/patchhq/patch/raw/main/docs/demo/patch-demo.mp4
 
 Or open [`docs/demo/patch-demo.mp4`](./docs/demo/patch-demo.mp4) in the repo.
 
+### Stills
+
+| | |
+|---|---|
+| [![patch init](./docs/demo/init-terminal.png)](./docs/demo/init-terminal.svg) | `npx patch init` detects languages + API connectors |
+| [![confidence gate](./docs/demo/confidence-flow.png)](./docs/demo/confidence-flow.svg) | Confidence ≥ 0.7 → **PR**, below → **Issue** |
+| [![fix diff](./docs/demo/fix-diff.png)](./docs/demo/fix-diff.svg) | Real fix: add required `currency` to `createCharge` |
+
+More: [docs/demo](./docs/demo/).
+
 ## Quick start
 
 ```bash

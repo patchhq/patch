@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-labelledby="title desc">
+  <title id="title">Before and after Patch fix</title>
+  <desc id="desc">Code diff showing Patch adding required currency to createCharge</desc>
+  <defs>
+    <linearGradient id="bg3" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0a100e"/>
+      <stop offset="55%" stop-color="#0c1210"/>
+      <stop offset="100%" stop-color="#101814"/>
+    </linearGradient>
+    <filter id="shadow3" x="-8%" y="-8%" width="116%" height="124%">
+      <feDropShadow dx="0" dy="20" stdDeviation="24" flood-color="#000" flood-opacity="0.4"/>
+    </filter>
+  </defs>
+
+  <rect width="1280" height="720" fill="url(#bg3)"/>
+  <circle cx="200" cy="100" r="240" fill="#e07060" opacity="0.06"/>
+  <circle cx="1100" cy="620" r="260" fill="#5ecf9a" opacity="0.08"/>
+
+  <text x="640" y="70" fill="#e8a54b" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="14" letter-spacing="0.16em" text-anchor="middle">ACTUAL FIX</text>
+  <text x="640" y="116" fill="#e8f0ea" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="36" font-style="italic" font-weight="800" text-anchor="middle">currency became required</text>
+  <text x="640" y="150" fill="#8fa397" font-family="ui-sans-serif, system-ui, sans-serif" font-size="17" text-anchor="middle">
+    Patch finds createCharge call sites and inserts the missing field
+  </text>
+
+  <!-- Diff window -->
+  <g filter="url(#shadow3)">
+    <rect x="140" y="190" width="1000" height="430" rx="16" fill="#0a0f0d" stroke="#1e2a24"/>
+    <rect x="140" y="190" width="1000" height="48" rx="16" fill="#141c18"/>
+    <rect x="140" y="222" width="1000" height="16" fill="#141c18"/>
+    <circle cx="172" cy="214" r="6" fill="#e07060"/>
+    <circle cx="194" cy="214" r="6" fill="#e8a54b"/>
+    <circle cx="216" cy="214" r="6" fill="#5ecf9a"/>
+    <text x="250" y="219" fill="#8fa397" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="14">src/consumer-named.ts</text>
+    <text x="1080" y="219" fill="#5ecf9a" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="13" text-anchor="end">confidence 0.82 · PR</text>
+
+    <!-- File header path -->
+    <text x="176" y="270" fill="#8fa397" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="15">@@ export async function chargeWithNamed(...)</text>
+
+    <g font-family="ui-monospace, Menlo, Consolas, monospace" font-size="20">
+      <!-- context -->
+      <text x="176" y="320" fill="#8fa397">  const client = createClient(apiKey);</text>
+
+      <!-- before -->
+      <rect x="156" y="340" width="968" height="44" fill="rgba(224,112,96,0.12)"/>
+      <text x="176" y="370" fill="#e07060">-</text>
+      <text x="204" y="370" fill="#e8f0ea">  return client.createCharge({ amount });</text>
+
+      <!-- after -->
+      <rect x="156" y="390" width="968" height="44" fill="rgba(94,207,154,0.12)"/>
+      <text x="176" y="420" fill="#5ecf9a">+</text>
+      <text x="204" y="420" fill="#e8f0ea">  return client.createCharge({ amount, </text>
+      <text x="620" y="420" fill="#e8a54b">currency: 'usd'</text>
+      <text x="800" y="420" fill="#e8f0ea"> });</text>
+
+      <!-- note -->
+      <text x="176" y="490" fill="#8fa397" font-size="16">// upstream ChargeOptions.currency?: string ’ currency: string</text>
+      <text x="176" y="530" fill="#8fa397" font-size="16">// validated with tsc before opening the PR</text>
+    </g>
+
+    <!-- chips -->
+    <g font-family="ui-monospace, Menlo, Consolas, monospace" font-size="13">
+      <rect x="176" y="560" width="110" height="32" rx="16" fill="rgba(255,255,255,0.03)" stroke="#1e2a24"/>
+      <text x="231" y="581" fill="#e8f0ea" text-anchor="middle">4 sites</text>
+      <rect x="300" y="560" width="100" height="32" rx="16" fill="rgba(255,255,255,0.03)" stroke="#1e2a24"/>
+      <text x="350" y="581" fill="#5ecf9a" text-anchor="middle">tsc </text>
+      <rect x="414" y="560" width="150" height="32" rx="16" fill="rgba(255,255,255,0.03)" stroke="#1e2a24"/>
+      <text x="489" y="581" fill="#e8a54b" text-anchor="middle">change_param</text>
+    </g>
+  </g>
+
+  <text x="640" y="670" fill="#8fa397" font-family="ui-sans-serif, system-ui, sans-serif" font-size="15" text-anchor="middle">
+    Same shape of fix Patch opens when an upstream field becomes required
+  </text>
+</svg>

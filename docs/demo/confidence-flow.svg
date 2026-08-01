@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-labelledby="title desc">
+  <title id="title">Confidence-gated PR vs Issue flow</title>
+  <desc id="desc">Diagram showing Patch opening a PR above the confidence threshold and an Issue below it</desc>
+  <defs>
+    <linearGradient id="bg2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0a100e"/>
+      <stop offset="55%" stop-color="#0c1210"/>
+      <stop offset="100%" stop-color="#101814"/>
+    </linearGradient>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#8fa397"/>
+    </marker>
+  </defs>
+
+  <rect width="1280" height="720" fill="url(#bg2)"/>
+  <circle cx="180" cy="140" r="260" fill="#e8a54b" opacity="0.07"/>
+  <circle cx="1120" cy="560" r="280" fill="#5ecf9a" opacity="0.07"/>
+
+  <text x="640" y="78" fill="#e8a54b" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" letter-spacing="0.16em" text-anchor="middle">CONFIDENCE GATE</text>
+  <text x="640" y="128" fill="#e8f0ea" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="40" font-style="italic" font-weight="800" text-anchor="middle">Sure enough for a PR?</text>
+  <text x="640" y="168" fill="#8fa397" font-family="ui-sans-serif, system-ui, sans-serif" font-size="18" text-anchor="middle">
+    Validation sets the ceiling. Threshold default is 0.7.
+  </text>
+
+  <!-- Fix validated -->
+  <rect x="470" y="210" width="340" height="78" rx="14" fill="#141c18" stroke="#1e2a24"/>
+  <text x="640" y="245" fill="#8fa397" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="13" text-anchor="middle">AFTER FIX + TYPECHECK</text>
+  <text x="640" y="272" fill="#e8f0ea" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="22" font-style="italic" font-weight="700" text-anchor="middle">confidence score</text>
+
+  <line x1="640" y1="288" x2="640" y2="330" stroke="#8fa397" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Decision diamond-ish box -->
+  <rect x="455" y="335" width="370" height="88" rx="14" fill="#141c18" stroke="#e8a54b" stroke-opacity="0.55"/>
+  <text x="640" y="372" fill="#e8a54b" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="15" text-anchor="middle">confidence_threshold</text>
+  <text x="640" y="402" fill="#e8f0ea" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="28" font-style="italic" font-weight="800" text-anchor="middle">e 0.7 ?</text>
+
+  <!-- Branch left: Issue -->
+  <line x1="455" y1="379" x2="280" y2="379" stroke="#8fa397" stroke-width="2"/>
+  <line x1="280" y1="379" x2="280" y2="450" stroke="#8fa397" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="360" y="368" fill="#e07060" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="14">no</text>
+
+  <rect x="120" y="460" width="320" height="160" rx="16" fill="#141c18" stroke="#e07060" stroke-opacity="0.45"/>
+  <text x="280" y="510" fill="#e07060" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="14" letter-spacing="0.12em" text-anchor="middle">BELOW THRESHOLD</text>
+  <text x="280" y="555" fill="#e8f0ea" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="36" font-style="italic" font-weight="800" text-anchor="middle">Open Issue</text>
+  <text x="280" y="590" fill="#8fa397" font-family="ui-sans-serif, system-ui, sans-serif" font-size="15" text-anchor="middle">Diagnosis + proposed fix for review</text>
+
+  <!-- Branch right: PR -->
+  <line x1="825" y1="379" x2="1000" y2="379" stroke="#8fa397" stroke-width="2"/>
+  <line x1="1000" y1="379" x2="1000" y2="450" stroke="#8fa397" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="900" y="368" fill="#5ecf9a" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="14">yes</text>
+
+  <rect x="840" y="460" width="320" height="160" rx="16" fill="#141c18" stroke="#5ecf9a" stroke-opacity="0.5"/>
+  <text x="1000" y="510" fill="#5ecf9a" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="14" letter-spacing="0.12em" text-anchor="middle">ABOVE THRESHOLD</text>
+  <text x="1000" y="555" fill="#e8f0ea" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="36" font-style="italic" font-weight="800" text-anchor="middle">Open PR</text>
+  <text x="1000" y="590" fill="#8fa397" font-family="ui-sans-serif, system-ui, sans-serif" font-size="15" text-anchor="middle">Typechecked fix on a patch/& branch</text>
+
+  <text x="640" y="680" fill="#8fa397" font-family="ui-sans-serif, system-ui, sans-serif" font-size="15" text-anchor="middle">
+    tsc + tests raise the ceiling · failed typecheck caps confidence at 0.25
+  </text>
+</svg>
