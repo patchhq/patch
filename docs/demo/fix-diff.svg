@@ -1,74 +1,85 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-labelledby="title desc">
-  <title id="title">Before and after Patch fix</title>
-  <desc id="desc">Code diff showing Patch adding required currency to createCharge</desc>
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900" role="img" aria-label="VS Code style before after fix diff">
   <defs>
-    <linearGradient id="bg3" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#0a100e"/>
-      <stop offset="55%" stop-color="#0c1210"/>
-      <stop offset="100%" stop-color="#101814"/>
-    </linearGradient>
-    <filter id="shadow3" x="-8%" y="-8%" width="116%" height="124%">
-      <feDropShadow dx="0" dy="20" stdDeviation="24" flood-color="#000" flood-opacity="0.4"/>
+    <filter id="winShadow" x="-6%" y="-6%" width="112%" height="118%">
+      <feDropShadow dx="0" dy="16" stdDeviation="24" flood-color="#000000" flood-opacity="0.5"/>
     </filter>
   </defs>
 
-  <rect width="1280" height="720" fill="url(#bg3)"/>
-  <circle cx="200" cy="100" r="240" fill="#e07060" opacity="0.06"/>
-  <circle cx="1100" cy="620" r="260" fill="#5ecf9a" opacity="0.08"/>
+  <rect width="1440" height="900" fill="#0E0C0A"/>
 
-  <text x="640" y="70" fill="#e8a54b" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="14" letter-spacing="0.16em" text-anchor="middle">ACTUAL FIX</text>
-  <text x="640" y="116" fill="#e8f0ea" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="36" font-style="italic" font-weight="800" text-anchor="middle">currency became required</text>
-  <text x="640" y="150" fill="#8fa397" font-family="ui-sans-serif, system-ui, sans-serif" font-size="17" text-anchor="middle">
-    Patch finds createCharge call sites and inserts the missing field
-  </text>
+  <g filter="url(#winShadow)">
+    <rect x="80" y="50" width="1280" height="800" rx="10" fill="#1E1E1E" stroke="#3A3228" stroke-width="1"/>
 
-  <!-- Diff window -->
-  <g filter="url(#shadow3)">
-    <rect x="140" y="190" width="1000" height="430" rx="16" fill="#0a0f0d" stroke="#1e2a24"/>
-    <rect x="140" y="190" width="1000" height="48" rx="16" fill="#141c18"/>
-    <rect x="140" y="222" width="1000" height="16" fill="#141c18"/>
-    <circle cx="172" cy="214" r="6" fill="#e07060"/>
-    <circle cx="194" cy="214" r="6" fill="#e8a54b"/>
-    <circle cx="216" cy="214" r="6" fill="#5ecf9a"/>
-    <text x="250" y="219" fill="#8fa397" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="14">src/consumer-named.ts</text>
-    <text x="1080" y="219" fill="#5ecf9a" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="13" text-anchor="end">confidence 0.82 · PR</text>
+    <rect x="80" y="50" width="1280" height="38" rx="10" fill="#2D2D2D"/>
+    <rect x="80" y="76" width="1280" height="12" fill="#2D2D2D"/>
+    <circle cx="106" cy="69" r="6" fill="#FF5F57"/>
+    <circle cx="128" cy="69" r="6" fill="#FEBC2E"/>
+    <circle cx="150" cy="69" r="6" fill="#28C840"/>
+    <text x="720" y="74" text-anchor="middle" font-family="Inter" font-size="13" fill="#EDE7D9" fill-opacity="0.55">checkout-app - consumer.ts - patch</text>
 
-    <!-- File header path -->
-    <text x="176" y="270" fill="#8fa397" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="15">@@ export async function chargeWithNamed(...)</text>
+    <rect x="80" y="88" width="48" height="762" fill="#17130E"/>
+    <rect x="96" y="120" width="16" height="16" rx="2" fill="#C6890F" fill-opacity="0.85"/>
+    <rect x="96" y="156" width="16" height="16" rx="2" fill="#EDE7D9" fill-opacity="0.2"/>
+    <rect x="96" y="192" width="16" height="16" rx="2" fill="#EDE7D9" fill-opacity="0.15"/>
 
-    <g font-family="ui-monospace, Menlo, Consolas, monospace" font-size="20">
-      <!-- context -->
-      <text x="176" y="320" fill="#8fa397">  const client = createClient(apiKey);</text>
+    <rect x="128" y="88" width="220" height="762" fill="#1A1612" stroke="#2A241C" stroke-width="1"/>
+    <text x="148" y="120" font-family="Inter" font-weight="500" font-size="11" fill="#EDE7D9" fill-opacity="0.45">EXPLORER</text>
+    <text x="148" y="160" font-family="JetBrains Mono" font-weight="500" font-size="13" fill="#EDE7D9" fill-opacity="0.55">src</text>
+    <text x="164" y="190" font-family="JetBrains Mono" font-weight="500" font-size="13" fill="#C6890F">consumer.ts</text>
+    <text x="164" y="218" font-family="JetBrains Mono" font-weight="500" font-size="13" fill="#EDE7D9" fill-opacity="0.4">wrapper.ts</text>
+    <text x="148" y="260" font-family="JetBrains Mono" font-weight="500" font-size="13" fill="#EDE7D9" fill-opacity="0.4">package.json</text>
 
-      <!-- before -->
-      <rect x="156" y="340" width="968" height="44" fill="rgba(224,112,96,0.12)"/>
-      <text x="176" y="370" fill="#e07060">-</text>
-      <text x="204" y="370" fill="#e8f0ea">  return client.createCharge({ amount });</text>
+    <rect x="348" y="88" width="1012" height="40" fill="#1E1E1E"/>
+    <rect x="348" y="88" width="200" height="40" fill="#17130E"/>
+    <text x="368" y="114" font-family="JetBrains Mono" font-weight="500" font-size="13" fill="#EDE7D9">consumer.ts</text>
+    <circle cx="520" cy="112" r="3" fill="#C6890F"/>
 
-      <!-- after -->
-      <rect x="156" y="390" width="968" height="44" fill="rgba(94,207,154,0.12)"/>
-      <text x="176" y="420" fill="#5ecf9a">+</text>
-      <text x="204" y="420" fill="#e8f0ea">  return client.createCharge({ amount, </text>
-      <text x="620" y="420" fill="#e8a54b">currency: 'usd'</text>
-      <text x="800" y="420" fill="#e8f0ea"> });</text>
+    <rect x="348" y="128" width="1012" height="28" fill="#1A1612"/>
+    <text x="368" y="147" font-family="Inter" font-size="12" fill="#EDE7D9" fill-opacity="0.4">src &gt; consumer.ts &gt; chargeWithNamed</text>
 
-      <!-- note -->
-      <text x="176" y="490" fill="#8fa397" font-size="16">// upstream ChargeOptions.currency?: string ’ currency: string</text>
-      <text x="176" y="530" fill="#8fa397" font-size="16">// validated with tsc before opening the PR</text>
+    <rect x="348" y="156" width="1012" height="36" fill="#1F1A14" stroke="#3A3228" stroke-width="1"/>
+    <text x="368" y="179" font-family="JetBrains Mono" font-weight="500" font-size="12" fill="#C6890F">SOURCE CONTROL - 1 file changed</text>
+    <text x="1100" y="179" font-family="JetBrains Mono" font-weight="500" font-size="12" fill="#3FB950">+1</text>
+    <text x="1140" y="179" font-family="JetBrains Mono" font-weight="500" font-size="12" fill="#F85149">-1</text>
+
+    <rect x="348" y="192" width="1012" height="580" fill="#17130E"/>
+    <rect x="348" y="192" width="72" height="580" fill="#14110E"/>
+
+    <g font-family="JetBrains Mono" font-weight="500" font-size="15">
+      <text x="372" y="240" fill="#EDE7D9" fill-opacity="0.3" text-anchor="end">4</text>
+      <text x="440" y="240" fill="#EDE7D9" fill-opacity="0.55">  export async function chargeWithNamed(</text>
+
+      <text x="372" y="272" fill="#EDE7D9" fill-opacity="0.3" text-anchor="end">5</text>
+      <text x="440" y="272" fill="#EDE7D9" fill-opacity="0.55">    apiKey: string,</text>
+
+      <text x="372" y="304" fill="#EDE7D9" fill-opacity="0.3" text-anchor="end">6</text>
+      <text x="440" y="304" fill="#EDE7D9" fill-opacity="0.55">    amount: number,</text>
+
+      <text x="372" y="336" fill="#EDE7D9" fill-opacity="0.3" text-anchor="end">7</text>
+      <text x="440" y="336" fill="#EDE7D9" fill-opacity="0.55">  ) {</text>
+
+      <text x="372" y="368" fill="#EDE7D9" fill-opacity="0.3" text-anchor="end">8</text>
+      <text x="440" y="368" fill="#EDE7D9" fill-opacity="0.55">    const client = createClient(apiKey);</text>
+
+      <rect x="348" y="384" width="1012" height="36" fill="#F85149" fill-opacity="0.12"/>
+      <rect x="348" y="384" width="4" height="36" fill="#F85149"/>
+      <text x="372" y="408" fill="#F85149" fill-opacity="0.7" text-anchor="end">9</text>
+      <text x="440" y="408" fill="#F85149">-   return client.createCharge({ amount });</text>
+
+      <rect x="348" y="420" width="1012" height="36" fill="#3FB950" fill-opacity="0.12"/>
+      <rect x="348" y="420" width="4" height="36" fill="#3FB950"/>
+      <text x="372" y="444" fill="#3FB950" fill-opacity="0.85" text-anchor="end">9</text>
+      <text x="440" y="444" fill="#EDE7D9">+   return client.createCharge({ amount, <tspan fill="#C6890F">currency: 'usd'</tspan> });</text>
+
+      <text x="372" y="488" fill="#EDE7D9" fill-opacity="0.3" text-anchor="end">10</text>
+      <text x="440" y="488" fill="#EDE7D9" fill-opacity="0.55">  }</text>
+
+      <text x="372" y="520" fill="#EDE7D9" fill-opacity="0.3" text-anchor="end">11</text>
     </g>
 
-    <!-- chips -->
-    <g font-family="ui-monospace, Menlo, Consolas, monospace" font-size="13">
-      <rect x="176" y="560" width="110" height="32" rx="16" fill="rgba(255,255,255,0.03)" stroke="#1e2a24"/>
-      <text x="231" y="581" fill="#e8f0ea" text-anchor="middle">4 sites</text>
-      <rect x="300" y="560" width="100" height="32" rx="16" fill="rgba(255,255,255,0.03)" stroke="#1e2a24"/>
-      <text x="350" y="581" fill="#5ecf9a" text-anchor="middle">tsc </text>
-      <rect x="414" y="560" width="150" height="32" rx="16" fill="rgba(255,255,255,0.03)" stroke="#1e2a24"/>
-      <text x="489" y="581" fill="#e8a54b" text-anchor="middle">change_param</text>
-    </g>
+    <rect x="348" y="772" width="1012" height="78" fill="#1A1612" stroke="#2A241C" stroke-width="1"/>
+    <text x="368" y="802" font-family="Inter" font-size="12" fill="#EDE7D9" fill-opacity="0.45">TERMINAL</text>
+    <text x="368" y="830" font-family="JetBrains Mono" font-weight="500" font-size="13" fill="#EDE7D9" fill-opacity="0.7"><tspan fill="#C6890F">&gt;</tspan> tsc --noEmit  <tspan fill="#3FB950">OK</tspan>  - confidence 0.85 -&gt; Pull Request</text>
   </g>
-
-  <text x="640" y="670" fill="#8fa397" font-family="ui-sans-serif, system-ui, sans-serif" font-size="15" text-anchor="middle">
-    Same shape of fix Patch opens when an upstream field becomes required
-  </text>
 </svg>

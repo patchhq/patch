@@ -1,60 +1,84 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-labelledby="title desc">
-  <title id="title">Confidence-gated PR vs Issue flow</title>
-  <desc id="desc">Diagram showing Patch opening a PR above the confidence threshold and an Issue below it</desc>
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900" role="img" aria-label="GitHub PR vs Issue confidence gate">
   <defs>
-    <linearGradient id="bg2" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#0a100e"/>
-      <stop offset="55%" stop-color="#0c1210"/>
-      <stop offset="100%" stop-color="#101814"/>
-    </linearGradient>
-    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
-      <path d="M0,0 L8,3 L0,6 Z" fill="#8fa397"/>
-    </marker>
+    <filter id="cardShadow" x="-5%" y="-5%" width="110%" height="115%">
+      <feDropShadow dx="0" dy="10" stdDeviation="16" flood-color="#000000" flood-opacity="0.4"/>
+    </filter>
   </defs>
 
-  <rect width="1280" height="720" fill="url(#bg2)"/>
-  <circle cx="180" cy="140" r="260" fill="#e8a54b" opacity="0.07"/>
-  <circle cx="1120" cy="560" r="280" fill="#5ecf9a" opacity="0.07"/>
+  <rect width="1440" height="900" fill="#0D1117"/>
 
-  <text x="640" y="78" fill="#e8a54b" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" letter-spacing="0.16em" text-anchor="middle">CONFIDENCE GATE</text>
-  <text x="640" y="128" fill="#e8f0ea" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="40" font-style="italic" font-weight="800" text-anchor="middle">Sure enough for a PR?</text>
-  <text x="640" y="168" fill="#8fa397" font-family="ui-sans-serif, system-ui, sans-serif" font-size="18" text-anchor="middle">
-    Validation sets the ceiling. Threshold default is 0.7.
-  </text>
+  <rect width="1440" height="56" fill="#010409" stroke="#21262D" stroke-width="1"/>
+  <circle cx="40" cy="28" r="12" fill="#EDE7D9" fill-opacity="0.85"/>
+  <text x="64" y="33" font-family="Inter" font-weight="500" font-size="14" fill="#EDE7D9">patchhq / checkout-app</text>
+  <text x="1240" y="33" font-family="JetBrains Mono" font-weight="500" font-size="12" fill="#EDE7D9" fill-opacity="0.45">patch scan - just now</text>
 
-  <!-- Fix validated -->
-  <rect x="470" y="210" width="340" height="78" rx="14" fill="#141c18" stroke="#1e2a24"/>
-  <text x="640" y="245" fill="#8fa397" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="13" text-anchor="middle">AFTER FIX + TYPECHECK</text>
-  <text x="640" y="272" fill="#e8f0ea" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="22" font-style="italic" font-weight="700" text-anchor="middle">confidence score</text>
+  <text x="48" y="110" font-family="Inter" font-size="14" fill="#EDE7D9" fill-opacity="0.55">Actions / patch</text>
+  <text x="48" y="150" font-family="JetBrains Mono" font-style="italic" font-weight="800" font-size="28" fill="#EDE7D9">Confidence gate</text>
+  <text x="48" y="180" font-family="Inter" font-size="15" fill="#EDE7D9" fill-opacity="0.5">Same scan. Threshold decides whether Patch opens a PR or an Issue.</text>
 
-  <line x1="640" y1="288" x2="640" y2="330" stroke="#8fa397" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="48" y="210" width="320" height="36" rx="18" fill="#161B22" stroke="#30363D" stroke-width="1"/>
+  <text x="68" y="233" font-family="JetBrains Mono" font-weight="500" font-size="13" fill="#EDE7D9" fill-opacity="0.7">confidence_threshold = <tspan fill="#C6890F">0.7</tspan></text>
 
-  <!-- Decision diamond-ish box -->
-  <rect x="455" y="335" width="370" height="88" rx="14" fill="#141c18" stroke="#e8a54b" stroke-opacity="0.55"/>
-  <text x="640" y="372" fill="#e8a54b" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="15" text-anchor="middle">confidence_threshold</text>
-  <text x="640" y="402" fill="#e8f0ea" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="28" font-style="italic" font-weight="800" text-anchor="middle">e 0.7 ?</text>
+  <g filter="url(#cardShadow)">
+    <rect x="48" y="280" width="640" height="520" rx="10" fill="#161B22" stroke="#238636" stroke-width="1.5"/>
+    <rect x="48" y="280" width="640" height="56" rx="10" fill="#12261A"/>
+    <rect x="48" y="320" width="640" height="16" fill="#12261A"/>
 
-  <!-- Branch left: Issue -->
-  <line x1="455" y1="379" x2="280" y2="379" stroke="#8fa397" stroke-width="2"/>
-  <line x1="280" y1="379" x2="280" y2="450" stroke="#8fa397" stroke-width="2" marker-end="url(#arrow)"/>
-  <text x="360" y="368" fill="#e07060" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="14">no</text>
+    <circle cx="88" cy="308" r="12" fill="none" stroke="#3FB950" stroke-width="2"/>
+    <path d="M82 308 h12 M88 302 v12" stroke="#3FB950" stroke-width="2" stroke-linecap="round"/>
 
-  <rect x="120" y="460" width="320" height="160" rx="16" fill="#141c18" stroke="#e07060" stroke-opacity="0.45"/>
-  <text x="280" y="510" fill="#e07060" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="14" letter-spacing="0.12em" text-anchor="middle">BELOW THRESHOLD</text>
-  <text x="280" y="555" fill="#e8f0ea" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="36" font-style="italic" font-weight="800" text-anchor="middle">Open Issue</text>
-  <text x="280" y="590" fill="#8fa397" font-family="ui-sans-serif, system-ui, sans-serif" font-size="15" text-anchor="middle">Diagnosis + proposed fix for review</text>
+    <text x="112" y="314" font-family="Inter" font-weight="500" font-size="15" fill="#3FB950">Open</text>
+    <text x="168" y="314" font-family="Inter" font-size="15" fill="#EDE7D9" fill-opacity="0.45">Pull request</text>
 
-  <!-- Branch right: PR -->
-  <line x1="825" y1="379" x2="1000" y2="379" stroke="#8fa397" stroke-width="2"/>
-  <line x1="1000" y1="379" x2="1000" y2="450" stroke="#8fa397" stroke-width="2" marker-end="url(#arrow)"/>
-  <text x="900" y="368" fill="#5ecf9a" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="14">yes</text>
+    <text x="80" y="380" font-family="Inter" font-weight="500" font-size="22" fill="#EDE7D9">fix: require currency on createCharge</text>
+    <text x="80" y="412" font-family="JetBrains Mono" font-weight="500" font-size="13" fill="#EDE7D9" fill-opacity="0.45">patch/a1b2c3d4 into main</text>
 
-  <rect x="840" y="460" width="320" height="160" rx="16" fill="#141c18" stroke="#5ecf9a" stroke-opacity="0.5"/>
-  <text x="1000" y="510" fill="#5ecf9a" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="14" letter-spacing="0.12em" text-anchor="middle">ABOVE THRESHOLD</text>
-  <text x="1000" y="555" fill="#e8f0ea" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="36" font-style="italic" font-weight="800" text-anchor="middle">Open PR</text>
-  <text x="1000" y="590" fill="#8fa397" font-family="ui-sans-serif, system-ui, sans-serif" font-size="15" text-anchor="middle">Typechecked fix on a patch/& branch</text>
+    <rect x="80" y="440" width="100" height="28" rx="14" fill="#1F6FEB" fill-opacity="0.2" stroke="#1F6FEB" stroke-opacity="0.5"/>
+    <text x="96" y="459" font-family="JetBrains Mono" font-weight="500" font-size="12" fill="#58A6FF">+4 -0</text>
 
-  <text x="640" y="680" fill="#8fa397" font-family="ui-sans-serif, system-ui, sans-serif" font-size="15" text-anchor="middle">
-    tsc + tests raise the ceiling · failed typecheck caps confidence at 0.25
-  </text>
+    <rect x="198" y="440" width="160" height="28" rx="14" fill="#C6890F" fill-opacity="0.15" stroke="#C6890F" stroke-opacity="0.5"/>
+    <text x="214" y="459" font-family="JetBrains Mono" font-weight="500" font-size="12" fill="#C6890F">confidence 0.85</text>
+
+    <text x="80" y="520" font-family="Inter" font-size="14" fill="#EDE7D9" fill-opacity="0.55">Checks</text>
+    <path d="M80 548 l5 5 l10 -12" fill="none" stroke="#3FB950" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="102" y="556" font-family="JetBrains Mono" font-weight="500" font-size="14" fill="#3FB950">typecheck</text>
+    <path d="M80 578 l5 5 l10 -12" fill="none" stroke="#3FB950" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="102" y="586" font-family="JetBrains Mono" font-weight="500" font-size="14" fill="#3FB950">tsc passed on 4 sites</text>
+
+    <text x="80" y="650" font-family="Inter" font-size="14" fill="#EDE7D9" fill-opacity="0.45">Opened because average confidence</text>
+    <text x="80" y="678" font-family="JetBrains Mono" font-weight="500" font-size="16" fill="#C6890F">0.85 &gt;= 0.7</text>
+
+    <rect x="80" y="720" width="200" height="40" rx="6" fill="#238636"/>
+    <text x="180" y="745" text-anchor="middle" font-family="Inter" font-weight="500" font-size="14" fill="#FFFFFF">Merge pull request</text>
+  </g>
+
+  <g filter="url(#cardShadow)">
+    <rect x="752" y="280" width="640" height="520" rx="10" fill="#161B22" stroke="#30363D" stroke-width="1.5"/>
+    <rect x="752" y="280" width="640" height="56" rx="10" fill="#1C1210"/>
+    <rect x="752" y="320" width="640" height="16" fill="#1C1210"/>
+
+    <circle cx="792" cy="308" r="12" fill="none" stroke="#C6890F" stroke-width="2"/>
+    <circle cx="792" cy="303" r="1.6" fill="#C6890F"/>
+    <line x1="792" y1="308" x2="792" y2="316" stroke="#C6890F" stroke-width="2" stroke-linecap="round"/>
+
+    <text x="816" y="314" font-family="Inter" font-weight="500" font-size="15" fill="#C6890F">Open</text>
+    <text x="872" y="314" font-family="Inter" font-size="15" fill="#EDE7D9" fill-opacity="0.45">Issue</text>
+
+    <text x="784" y="380" font-family="Inter" font-weight="500" font-size="22" fill="#EDE7D9">upstream: currency now required</text>
+    <text x="784" y="412" font-family="JetBrains Mono" font-weight="500" font-size="13" fill="#EDE7D9" fill-opacity="0.45">needs review - heuristic path</text>
+
+    <rect x="784" y="440" width="160" height="28" rx="14" fill="#C6890F" fill-opacity="0.12" stroke="#C6890F" stroke-opacity="0.4"/>
+    <text x="800" y="459" font-family="JetBrains Mono" font-weight="500" font-size="12" fill="#C6890F">confidence 0.55</text>
+
+    <text x="784" y="520" font-family="Inter" font-size="14" fill="#EDE7D9" fill-opacity="0.55">Diagnosis</text>
+    <text x="784" y="556" font-family="JetBrains Mono" font-weight="500" font-size="14" fill="#EDE7D9" fill-opacity="0.75">4 createCharge sites found</text>
+    <text x="784" y="586" font-family="JetBrains Mono" font-weight="500" font-size="14" fill="#EDE7D9" fill-opacity="0.75">fix proposed, below PR threshold</text>
+
+    <text x="784" y="650" font-family="Inter" font-size="14" fill="#EDE7D9" fill-opacity="0.45">Opened because average confidence</text>
+    <text x="784" y="678" font-family="JetBrains Mono" font-weight="500" font-size="16" fill="#EDE7D9" fill-opacity="0.7">0.55 &lt; 0.7</text>
+
+    <rect x="784" y="720" width="160" height="40" rx="6" fill="#21262D" stroke="#30363D"/>
+    <text x="864" y="745" text-anchor="middle" font-family="Inter" font-weight="500" font-size="14" fill="#EDE7D9">View report</text>
+  </g>
 </svg>

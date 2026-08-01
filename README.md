@@ -22,16 +22,6 @@ https://github.com/patchhq/patch/raw/main/docs/demo/patch-demo.mp4
 
 Or open [`docs/demo/patch-demo.mp4`](./docs/demo/patch-demo.mp4) in the repo.
 
-### Stills
-
-| | |
-|---|---|
-| [![patch init](./docs/demo/init-terminal.png)](./docs/demo/init-terminal.svg) | `npx patch init` detects languages + API connectors |
-| [![confidence gate](./docs/demo/confidence-flow.png)](./docs/demo/confidence-flow.svg) | Confidence ≥ 0.7 → **PR**, below → **Issue** |
-| [![fix diff](./docs/demo/fix-diff.png)](./docs/demo/fix-diff.svg) | Real fix: add required `currency` to `createCharge` |
-
-More: [docs/demo](./docs/demo/).
-
 ## Quick start
 
 ```bash
@@ -40,10 +30,10 @@ npx patch init --yes
 npx patch scan --dry-run
 ```
 
-| Env | Purpose |
-|-----|---------|
-| `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` | LLM classify/fix (required — see below) |
-| `GITHUB_TOKEN` or Patch GitHub App | Open PRs/Issues (else `.patch/reports/`) — [docs/github-app.md](./docs/github-app.md) |
+| Env                                     | Purpose                                                                               |
+| --------------------------------------- | ------------------------------------------------------------------------------------- |
+| `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` | LLM classify/fix (required — see below)                                               |
+| `GITHUB_TOKEN` or Patch GitHub App      | Open PRs/Issues (else `.patch/reports/`) — [docs/github-app.md](./docs/github-app.md) |
 
 ## Model providers
 
@@ -58,10 +48,10 @@ Classify and fix call a pluggable provider. Choose one in `patch.config.json` (n
 }
 ```
 
-| Provider | `provider` value | Env var | Get a key |
-|----------|------------------|---------|-----------|
-| Anthropic (Claude) | `anthropic` | `ANTHROPIC_API_KEY` | [console.anthropic.com/settings/keys](https://console.anthropic.com/settings/keys) |
-| OpenAI (GPT / Codex-style) | `openai` | `OPENAI_API_KEY` | [platform.openai.com/api-keys](https://platform.openai.com/api-keys) |
+| Provider                   | `provider` value | Env var             | Get a key                                                                          |
+| -------------------------- | ---------------- | ------------------- | ---------------------------------------------------------------------------------- |
+| Anthropic (Claude)         | `anthropic`      | `ANTHROPIC_API_KEY` | [console.anthropic.com/settings/keys](https://console.anthropic.com/settings/keys) |
+| OpenAI (GPT / Codex-style) | `openai`         | `OPENAI_API_KEY`    | [platform.openai.com/api-keys](https://platform.openai.com/api-keys)               |
 
 `patch init` asks which provider to use and tells you what to set if the env var is missing. `patch scan` fails immediately with a clear message if that key is unset.
 
@@ -81,23 +71,23 @@ connector fetch → diff snapshot → classify (ChangeEvent)
 
 Also covers **Dependabot-style** npm version + security bumps via `dependency-update` (see [docs/connectors.md](./docs/connectors.md)).
 
-| Connector | Source | Reliability |
-|-----------|--------|-------------|
-| `openapi-diff` | Formal OpenAPI JSON/YAML | Highest — structural contract |
-| `package-diff` | npm/PyPI + `.d.ts` | High — exact signatures |
+| Connector           | Source                        | Reliability                                    |
+| ------------------- | ----------------------------- | ---------------------------------------------- |
+| `openapi-diff`      | Formal OpenAPI JSON/YAML      | Highest — structural contract                  |
+| `package-diff`      | npm/PyPI + `.d.ts`            | High — exact signatures                        |
 | `dependency-update` | npm registry + OSV advisories | High — Dependabot-style version/security bumps |
-| `doc-scrape` | HTML docs, no formal spec | Lower — LLM bears more burden |
+| `doc-scrape`        | HTML docs, no formal spec     | Lower — LLM bears more burden                  |
 
 Language scanners: **TypeScript/JavaScript** implemented; Python / Rust / Go stubs — [docs/languages.md](./docs/languages.md).  
 Fix-agent rules — [docs/rules.md](./docs/rules.md). Confidence ceilings — [docs/confidence.md](./docs/confidence.md).
 
 ## Confidence
 
-| Validation outcome | Confidence ceiling |
-|--------------------|--------------------|
-| `tsc` + tests pass | uncapped (model score) |
-| `tsc` passes, no tests | ≤ 0.75 |
-| `tsc` fails | ≤ 0.25 |
+| Validation outcome     | Confidence ceiling     |
+| ---------------------- | ---------------------- |
+| `tsc` + tests pass     | uncapped (model score) |
+| `tsc` passes, no tests | ≤ 0.75                 |
+| `tsc` fails            | ≤ 0.25                 |
 
 Above `confidence_threshold` (default `0.7`) → **PR**. Below → **Issue**.
 

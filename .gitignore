@@ -20,3 +20,7 @@ coverage/
 package.json.prepack-backup
 demos/video/out/
 demos/video/.remotion/
+docs/demo/fonts/
+docs/demo/node_modules/
+docs/demo/package.json
+docs/demo/package-lock.json

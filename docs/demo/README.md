@@ -13,24 +13,14 @@ pnpm render
 cp out/patch-demo.mp4 ../../docs/demo/patch-demo.mp4
 ```
 
-## Stills
+## Stills (palette `#C6890F` / `#17130E` / `#EDE7D9`)
+
+Screenshot-style assets (macOS terminal, GitHub dark UI, VS Code diff) — not flat poster graphics.
 
 | Asset | What it shows |
 |-------|----------------|
-| [`init-terminal.png`](./init-terminal.png) / [`.svg`](./init-terminal.svg) | `npx patch init` auto-detecting languages + API connectors |
-| [`confidence-flow.png`](./confidence-flow.png) / [`.svg`](./confidence-flow.svg) | Confidence gate → **PR** (≥ 0.7) vs **Issue** (&lt; 0.7) |
-| [`fix-diff.png`](./fix-diff.png) / [`.svg`](./fix-diff.svg) | Before/after fix adding required `currency` to `createCharge` |
+| [`init-terminal.svg`](./init-terminal.svg) / [`.png`](./init-terminal.png) | Real terminal: `npx patch init` auto-detecting APIs |
+| [`confidence-flow.svg`](./confidence-flow.svg) / [`.png`](./confidence-flow.png) | GitHub-style PR vs Issue from the confidence gate |
+| [`fix-diff.svg`](./fix-diff.svg) / [`.png`](./fix-diff.png) | VS Code source-control diff with the actual fix |
 
-### Preview
-
-**Init**
-
-![patch init detecting APIs](./init-terminal.png)
-
-**Confidence gate**
-
-![PR vs Issue confidence flow](./confidence-flow.png)
-
-**Fix diff**
-
-![before/after createCharge fix](./fix-diff.png)
+**Type:** Display JetBrains Mono italic 800 · Data JetBrains Mono 500 · Body Inter.

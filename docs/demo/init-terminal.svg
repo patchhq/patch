@@ -1,73 +1,60 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-labelledby="title desc">
-  <title id="title">npx patch init detecting APIs</title>
-  <desc id="desc">Terminal screenshot of Patch init auto-detecting TypeScript and API connectors</desc>
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900" role="img" aria-label="Real terminal: npx patch init">
+  <rect width="1440" height="900" fill="#0D0B09"/>
+  <rect width="1440" height="900" fill="#17130E" opacity="0.92"/>
+
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#0a100e"/>
-      <stop offset="55%" stop-color="#0c1210"/>
-      <stop offset="100%" stop-color="#101814"/>
-    </linearGradient>
-    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
-      <feDropShadow dx="0" dy="24" stdDeviation="28" flood-color="#000" flood-opacity="0.45"/>
+    <filter id="shadow" x="-8%" y="-8%" width="116%" height="120%">
+      <feDropShadow dx="0" dy="18" stdDeviation="28" flood-color="#000000" flood-opacity="0.55"/>
     </filter>
+    <linearGradient id="titlebar" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#2A241C"/>
+      <stop offset="100%" stop-color="#1F1A14"/>
+    </linearGradient>
   </defs>
 
-  <rect width="1280" height="720" fill="url(#bg)"/>
-  <circle cx="220" cy="120" r="280" fill="#e8a54b" opacity="0.08"/>
-  <circle cx="1100" cy="620" r="260" fill="#5ecf9a" opacity="0.07"/>
-
-  <!-- Window -->
   <g filter="url(#shadow)">
-    <rect x="120" y="90" width="1040" height="540" rx="16" fill="#0a0f0d" stroke="#1e2a24"/>
-    <rect x="120" y="90" width="1040" height="48" rx="16" fill="#141c18"/>
-    <rect x="120" y="122" width="1040" height="16" fill="#141c18"/>
-    <circle cx="152" cy="114" r="6" fill="#e07060"/>
-    <circle cx="174" cy="114" r="6" fill="#e8a54b"/>
-    <circle cx="196" cy="114" r="6" fill="#5ecf9a"/>
-    <text x="230" y="119" fill="#8fa397" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">zsh  patch init</text>
-    <text x="1040" y="119" fill="#e8a54b" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" text-anchor="end">@patch-dev/cli</text>
+    <rect x="100" y="70" width="1240" height="760" rx="12" fill="#17130E" stroke="#3A3228" stroke-width="1"/>
+    <rect x="100" y="70" width="1240" height="44" rx="12" fill="url(#titlebar)"/>
+    <rect x="100" y="102" width="1240" height="12" fill="#1F1A14"/>
 
-    <!-- Terminal body -->
-    <g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="18">
-      <text x="156" y="180" fill="#8fa397">$ npx patch init</text>
+    <circle cx="128" cy="92" r="7" fill="#FF5F57"/>
+    <circle cx="152" cy="92" r="7" fill="#FEBC2E"/>
+    <circle cx="176" cy="92" r="7" fill="#28C840"/>
 
-      <text x="156" y="222" fill="#e8f0ea" font-style="italic" font-weight="700" font-size="22">Patch init</text>
-      <text x="156" y="248" fill="#8fa397">----------</text>
+    <text x="720" y="97" text-anchor="middle" font-family="JetBrains Mono" font-weight="500" font-size="13" fill="#EDE7D9" fill-opacity="0.55">HP@patch - zsh - 120x36</text>
 
-      <text x="156" y="292" fill="#e8f0ea">Detected languages: </text>
-      <text x="378" y="292" fill="#5ecf9a">TypeScript</text>
+    <rect x="100" y="114" width="1240" height="716" fill="#17130E"/>
 
-      <text x="156" y="336" fill="#e8f0ea">Detected </text>
-      <text x="256" y="336" fill="#e8a54b">2</text>
-      <text x="276" y="336" fill="#e8f0ea"> connector match(es):</text>
+    <g font-family="JetBrains Mono" font-weight="500" font-size="18" fill="#EDE7D9">
+      <text x="128" y="160"><tspan fill="#C6890F">patch</tspan><tspan fill="#EDE7D9" fill-opacity="0.45"> on </tspan><tspan fill="#C6890F">main</tspan><tspan fill="#EDE7D9" fill-opacity="0.45"> via </tspan><tspan fill="#C6890F">v20.11.0</tspan></text>
+      <text x="128" y="190"><tspan fill="#C6890F">&gt;</tspan> npx patch init</text>
 
-      <text x="176" y="380" fill="#5ecf9a">"</text>
-      <text x="200" y="380" fill="#e8f0ea">stripe</text>
-      <text x="290" y="380" fill="#8fa397">’</text>
-      <text x="320" y="380" fill="#e8a54b">stripe-openapi</text>
-      <text x="500" y="380" fill="#8fa397">(openapi-diff)</text>
+      <text x="128" y="240" fill="#EDE7D9" fill-opacity="0.4">Need to install the following packages:</text>
+      <text x="128" y="266" fill="#EDE7D9" fill-opacity="0.4">  @patch-dev/cli@0.1.4</text>
+      <text x="128" y="292" fill="#EDE7D9" fill-opacity="0.4">Ok to proceed? (y) y</text>
 
-      <text x="176" y="416" fill="#5ecf9a">"</text>
-      <text x="200" y="416" fill="#e8f0ea">openai</text>
-      <text x="290" y="416" fill="#8fa397">’</text>
-      <text x="320" y="416" fill="#e8a54b">openai-node-sdk</text>
-      <text x="520" y="416" fill="#8fa397">(package-diff)</text>
+      <text x="128" y="346" font-style="italic" font-weight="800" font-size="22" fill="#EDE7D9">Patch init</text>
+      <text x="128" y="372" fill="#EDE7D9" fill-opacity="0.35">----------</text>
 
-      <text x="156" y="468" fill="#e8f0ea">Wrote </text>
-      <text x="226" y="468" fill="#5ecf9a">patch.config.json</text>
-      <text x="156" y="500" fill="#e8f0ea">Wrote </text>
-      <text x="226" y="500" fill="#5ecf9a">.patch/rules.md</text>
-      <text x="156" y="532" fill="#e8f0ea">Scaffolded </text>
-      <text x="286" y="532" fill="#5ecf9a">.github/workflows/patch.yml</text>
+      <text x="128" y="418">Detected languages: <tspan fill="#C6890F">TypeScript</tspan></text>
+      <text x="128" y="456">Detected 2 connector match(es):</text>
 
-      <text x="156" y="580" fill="#8fa397">Model provider: anthropic · APIs detected automatically</text>
-      <rect x="156" y="598" width="10" height="18" fill="#5ecf9a">
-        <animate attributeName="opacity" values="1;0.2;1" dur="1.1s" repeatCount="indefinite"/>
-      </rect>
+      <text x="128" y="500"><tspan fill="#C6890F">  *</tspan> openai <tspan fill="#EDE7D9" fill-opacity="0.4">-&gt;</tspan> openai-node-sdk <tspan fill="#EDE7D9" fill-opacity="0.45">(package-diff)</tspan></text>
+      <text x="128" y="532"><tspan fill="#C6890F">  *</tspan> stripe <tspan fill="#EDE7D9" fill-opacity="0.4">-&gt;</tspan> stripe-openapi <tspan fill="#EDE7D9" fill-opacity="0.45">(openapi-diff)</tspan></text>
+
+      <text x="128" y="580" fill="#EDE7D9" fill-opacity="0.7">Write patch.config.json with these connectors? [Y/n] Y</text>
+
+      <text x="128" y="624">Wrote <tspan fill="#C6890F">patch.config.json</tspan></text>
+      <text x="128" y="656">Model provider: anthropic (key from $ANTHROPIC_API_KEY)</text>
+      <text x="128" y="688">Wrote <tspan fill="#C6890F">.patch/rules.md</tspan></text>
+      <text x="128" y="720">Scaffolded <tspan fill="#C6890F">.github/workflows/patch.yml</tspan></text>
+
+      <text x="128" y="768" fill="#EDE7D9" fill-opacity="0.55">Next steps:</text>
+      <text x="128" y="800" fill="#EDE7D9" fill-opacity="0.55">  1. Install the Patch GitHub App on this repo</text>
+      <text x="128" y="832" fill="#EDE7D9" fill-opacity="0.55">  2. Add secrets: ANTHROPIC_API_KEY, PATCH_GITHUB_APP_ID, ...</text>
     </g>
-  </g>
 
-  <text x="640" y="680" fill="#8fa397" font-family="ui-sans-serif, system-ui, sans-serif" font-size="15" text-anchor="middle">
-    patch init scans package.json and wires connectors for you
-  </text>
+    <rect x="128" y="852" width="9" height="18" fill="#C6890F" opacity="0.85"/>
+  </g>
 </svg>
