@@ -23,6 +23,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@patch-dev/model": "workspace:*",
     "zod": "^3.24.1"
   },
   "devDependencies": {

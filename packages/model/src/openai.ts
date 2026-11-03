@@ -1,10 +1,12 @@
 import OpenAI from 'openai';
+import { SDK_PLACEHOLDER_KEY, withEndpoint } from './endpoint.js';
 import type {
+  ModelCapabilities,
   ModelCompleteRequest,
   ModelCompleteResult,
   ModelContentPart,
-  ModelMessage,
   ModelProvider,
+  ModelProviderId,
   ModelToolCall,
 } from './types.js';
 
@@ -87,25 +89,56 @@ function toOpenAIMessages(request: ModelCompleteRequest): OpenAIMessage[] {
   return out;
 }
 
+export interface OpenAIProviderOptions {
+  model: string;
+  /** Provider id for logs; defaults to 'openai'. */
+  id?: ModelProviderId;
+  /** Endpoint override — Azure, OpenRouter, Ollama, vLLM, or an internal proxy. */
+  baseUrl?: string;
+  /** Final header set (auth included). Applied by the endpoint wrapper, not the SDK. */
+  headers?: Readonly<Record<string, string>>;
+  /** Final query parameters (auth included). */
+  query?: Readonly<Record<string, string>>;
+  /** May tool definitions be sent? Default true. */
+  tools?: boolean;
+  /** Test seam: an injected client owns its own transport and auth. */
+  client?: OpenAI;
+}
+
 export class OpenAIProvider implements ModelProvider {
-  readonly id = 'openai' as const;
+  readonly id: ModelProviderId;
   readonly model: string;
+  readonly capabilities: ModelCapabilities;
   private readonly client: OpenAI;
 
-  constructor(options: { apiKey: string; model: string; client?: OpenAI }) {
+  constructor(options: OpenAIProviderOptions) {
+    this.id = options.id ?? 'openai';
     this.model = options.model;
-    this.client = options.client ?? new OpenAI({ apiKey: options.apiKey });
+    this.capabilities = { tools: options.tools ?? true };
+    this.client =
+      options.client ??
+      new OpenAI({
+        apiKey: SDK_PLACEHOLDER_KEY,
+        ...(options.baseUrl ? { baseURL: options.baseUrl } : {}),
+        fetch: withEndpoint({
+          headers: options.headers ?? {},
+          query: options.query ?? {},
+        }),
+      });
   }
 
   async complete(request: ModelCompleteRequest): Promise<ModelCompleteResult> {
-    const tools = request.tools?.map((t) => ({
-      type: 'function' as const,
-      function: {
-        name: t.name,
-        description: t.description,
-        parameters: t.input_schema,
-      },
-    }));
+    const tools =
+      this.capabilities.tools === false
+        ? undefined
+        : request.tools?.map((t) => ({
+            type: 'function' as const,
+            function: {
+              name: t.name,
+              description: t.description,
+              parameters: t.input_schema,
+            },
+          }));
 
     const response = await this.client.chat.completions.create({
       model: this.model,

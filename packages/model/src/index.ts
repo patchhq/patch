@@ -1,24 +1,43 @@
 export type {
   ModelProvider,
   ModelProviderId,
-  ModelConfig,
+  ModelDialect,
+  ModelAuth,
+  ModelAuthScheme,
+  ModelCapabilities,
   ModelCompleteRequest,
   ModelCompleteResult,
-  ModelMessage,
   ModelContentPart,
+  ModelMessage,
+  ModelRole,
   ModelToolCall,
   ModelToolDefinition,
 } from './types.js';
 export {
-  ModelConfigSchema,
   ModelProviderIdSchema,
-  DEFAULT_MODEL_CONFIG,
   MissingModelKeyError,
-  assertModelKeyPresent,
   assertNoEmbeddedSecrets,
+  containsKeyShapedSecret,
   readApiKeyFromEnv,
-  keySignupUrl,
 } from './types.js';
+export {
+  BUILTIN_PROVIDERS,
+  builtinProvider,
+  isBuiltinProvider,
+  keySignupUrl,
+  type BuiltinProvider,
+} from './builtins.js';
+export {
+  DEFAULT_MODEL_CONFIG,
+  InvalidModelConfigError,
+  ModelConfigSchema,
+  assertModelKeyPresent,
+  describeModel,
+  resolveModelConfig,
+  serializeModelConfig,
+  type ModelConfig,
+  type ResolvedModelConfig,
+} from './config.js';
 export { AnthropicProvider } from './anthropic.js';
 export { OpenAIProvider } from './openai.js';
-export { createModelProvider } from './factory.js';
+export { createModelProvider, type CreateModelProviderOptions } from './factory.js';

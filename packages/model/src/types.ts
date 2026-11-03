@@ -59,49 +59,81 @@ export interface ModelCompleteResult {
 }
 
 /**
+ * Wire format an adapter speaks.
+ *
+ * Closed on purpose: each variant needs a real request/response translator, so adding one is
+ * a code change, not a config change. Provider *identity* is open (see `ModelProviderId`).
+ */
+export type ModelDialect = 'anthropic' | 'openai';
+
+/**
+ * Open provider identity. Built-in ids (`anthropic`, `openai`) get defaults from
+ * `BUILTIN_PROVIDERS`; any other slug names a custom endpoint declared in `patch.config.json`.
+ */
+export type ModelProviderId = string;
+
+export const ModelProviderIdSchema = z
+  .string()
+  .regex(
+    /^[a-z0-9][a-z0-9._-]{0,63}$/,
+    'provider must be 1–64 characters of lowercase letters, digits, ".", "_" or "-"',
+  );
+
+/**
+ * How the resolved key reaches the endpoint.
+ *
+ * - `api-key` — the dialect's native transport: `x-api-key` for Anthropic,
+ *   `Authorization: Bearer` for OpenAI.
+ * - `header` — `<name>: <key>` (Azure OpenAI's `api-key`).
+ * - `query` — `?<name>=<key>`.
+ * - `none` — no credentials (local model server). Legal only without `api_key_env`.
+ */
+export type ModelAuthScheme = 'api-key' | 'header' | 'query' | 'none';
+
+export interface ModelAuth {
+  readonly scheme: ModelAuthScheme;
+  /** Required for `header` and `query`. */
+  readonly name?: string;
+}
+
+/**
+ * What an endpoint can do. Absent means "unknown — assume the capability is present".
+ *
+ * `fix` needs `tools` for its `read_file` loop; a provider that reports `tools: false` gets a
+ * single-shot proposal instead of a conversation that silently fails to produce tool calls.
+ */
+export interface ModelCapabilities {
+  readonly tools?: boolean;
+}
+
+/**
  * Pluggable LLM backend used by Classify and Fix-generation.
  * SDKs stay behind this interface — stages never import them directly.
+ *
+ * This interface *is* the in-process extension point: implement it and hand the object to a
+ * stage (or to `runScan({ provider })`). Nothing above it knows where it came from.
  */
 export interface ModelProvider {
-  readonly id: 'anthropic' | 'openai';
+  /** Built-in id or the custom slug from `patch.config.json` — used for logs only. */
+  readonly id: ModelProviderId;
   readonly model: string;
+  readonly capabilities?: ModelCapabilities;
   complete(request: ModelCompleteRequest): Promise<ModelCompleteResult>;
 }
 
-export const ModelProviderIdSchema = z.enum(['anthropic', 'openai']);
-export type ModelProviderId = z.infer<typeof ModelProviderIdSchema>;
+/**
+ * Signup URL for a provider Patch ships defaults for; `undefined` for custom endpoints.
+ * Re-exported from `builtins.ts`; kept here so the error class can use it without a cycle.
+ */
+export function keySignupUrlFor(id: ModelProviderId): string | undefined {
+  return BUILTIN_SIGNUP_URLS[id];
+}
 
-export const ModelConfigSchema = z
-  .object({
-    provider: ModelProviderIdSchema.default('anthropic'),
-    /**
-     * Name of the environment variable that holds the API key.
-     * Never store the key itself in patch.config.json.
-     */
-    api_key_env: z.string().min(1).optional(),
-    /** Optional model id override. */
-    model: z.string().min(1).optional(),
-  })
-  .default({})
-  .transform((raw) => {
-    const provider = raw.provider ?? 'anthropic';
-    const api_key_env =
-      raw.api_key_env ??
-      (provider === 'openai' ? 'OPENAI_API_KEY' : 'ANTHROPIC_API_KEY');
-    const model =
-      raw.model ??
-      (provider === 'openai' ? 'gpt-4o' : 'claude-sonnet-4-20250514');
-    return { provider, api_key_env, model };
-  });
+/** Filled by `builtins.ts` at import time — one table, one owner (see `registerBuiltinSignupUrls`). */
+const BUILTIN_SIGNUP_URLS: Record<string, string | undefined> = {};
 
-export type ModelConfig = z.infer<typeof ModelConfigSchema>;
-
-export const DEFAULT_MODEL_CONFIG: ModelConfig = ModelConfigSchema.parse({});
-
-export function keySignupUrl(provider: ModelProviderId): string {
-  return provider === 'openai'
-    ? 'https://platform.openai.com/api-keys'
-    : 'https://console.anthropic.com/settings/keys';
+export function registerBuiltinSignupUrls(urls: Record<string, string>): void {
+  Object.assign(BUILTIN_SIGNUP_URLS, urls);
 }
 
 /** Thrown when the configured provider's API key env var is unset. */
@@ -109,10 +141,12 @@ export class MissingModelKeyError extends Error {
   readonly envVar: string;
   readonly provider: ModelProviderId;
 
-  constructor(provider: ModelProviderId, envVar: string) {
+  constructor(provider: ModelProviderId, envVar: string, signupUrl?: string) {
+    const url = signupUrl ?? keySignupUrlFor(provider);
     super(
       `Missing API key for model provider "${provider}". ` +
-        `Set environment variable ${envVar} (get a key at ${keySignupUrl(provider)}).`,
+        `Set environment variable ${envVar}` +
+        (url ? ` (get a key at ${url}).` : '.'),
     );
     this.name = 'MissingModelKeyError';
     this.envVar = envVar;
@@ -120,31 +154,35 @@ export class MissingModelKeyError extends Error {
   }
 }
 
-export function readApiKeyFromEnv(envVar: string): string | undefined {
+export function readApiKeyFromEnv(envVar: string | undefined): string | undefined {
+  if (!envVar) return undefined;
   const value = process.env[envVar]?.trim();
   return value || undefined;
 }
 
-export function assertModelKeyPresent(config: ModelConfig): string {
-  const key = readApiKeyFromEnv(config.api_key_env);
-  if (!key) {
-    throw new MissingModelKeyError(config.provider, config.api_key_env);
-  }
-  return key;
+/** Key-shaped material we refuse to accept in `patch.config.json`. */
+const KEY_SHAPED = /sk-ant-[A-Za-z0-9_-]{20,}|sk-[A-Za-z0-9]{20,}|BEGIN (RSA )?PRIVATE KEY/;
+/** `https://user:pass@host` — a credential hidden in a URL. */
+const URL_USERINFO = /[a-z][a-z0-9+.-]*:\/\/[^\s/"']+@/i;
+
+export function containsKeyShapedSecret(text: string): boolean {
+  return KEY_SHAPED.test(text);
 }
 
-/** Reject config objects that accidentally embed a key-shaped string. */
+/**
+ * Reject config objects that embed credentials.
+ *
+ * Single owner of "what a secret looks like": key-shaped strings (Anthropic/OpenAI/PEM) and
+ * URL userinfo (`https://user:pass@host`). Pure and side-effect free, so it can run at parse
+ * time, in `init` before writing the file, and again in the factory.
+ */
 export function assertNoEmbeddedSecrets(configValue: unknown): void {
   const json = JSON.stringify(configValue);
-  // sk-ant-… (Anthropic) / sk-… (OpenAI) / common PEM headers
-  if (
-    /sk-ant-[A-Za-z0-9_-]{20,}/.test(json) ||
-    /sk-[A-Za-z0-9]{20,}/.test(json) ||
-    /BEGIN (RSA )?PRIVATE KEY/.test(json)
-  ) {
+  if (containsKeyShapedSecret(json) || URL_USERINFO.test(json)) {
     throw new Error(
       'Refusing to use config that appears to contain an API key or private key. ' +
-        'Store only provider + api_key_env in patch.config.json.',
+        'Store only the provider id and the env var *name* in patch.config.json; ' +
+        'never embed a key, a password, or a credential in a URL.',
     );
   }
 }

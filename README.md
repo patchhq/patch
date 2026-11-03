@@ -37,7 +37,7 @@ npx patch scan --dry-run
 
 ## Model providers
 
-Classify and fix call a pluggable provider. Choose one in `patch.config.json` (never store the API key in that file):
+Classify and fix call a pluggable provider. Choose one in `patch.config.json` (never store the API key in that file — only the *name* of the env var that holds it):
 
 ```json
 {
@@ -56,6 +56,36 @@ Classify and fix call a pluggable provider. Choose one in `patch.config.json` (n
 `patch init` asks which provider to use and tells you what to set if the env var is missing. `patch scan` fails immediately with a clear message if that key is unset.
 
 Optional: set `"model": "gpt-4o"` (or a Claude model id) under `model` to override the default.
+
+### Custom endpoints
+
+Any endpoint that speaks OpenAI's chat-completions API or Anthropic's messages API works — a gateway, Azure OpenAI, OpenRouter, Ollama, vLLM, or an internal proxy. Pick your own provider id, say which wire format it speaks with `dialect`, and point `base_url` at it:
+
+```json
+{
+  "model": {
+    "provider": "ollama",
+    "dialect": "openai",
+    "base_url": "http://127.0.0.1:11434/v1",
+    "model": "qwen2.5-coder:32b",
+    "auth": { "scheme": "none" }
+  }
+}
+```
+
+| Key           | Required        | Meaning                                                                                                                  |
+| ------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `provider`    | no              | Identity used in logs. `anthropic` / `openai` take defaults from the table above; anything else is a custom endpoint.    |
+| `dialect`     | custom only     | `openai` (chat completions) or `anthropic` (messages).                                                                   |
+| `base_url`    | custom only     | Endpoint URL. http(s), no credentials embedded.                                                                          |
+| `model`       | custom only     | Model id the endpoint expects.                                                                                            |
+| `api_key_env` | unless keyless  | Name of the env var holding the key.                                                                                      |
+| `auth`        | no              | Where the key goes: `{ "scheme": "api-key" }` (default; dialect's native header), `{ "scheme": "header", "name": "api-key" }`, `{ "scheme": "query", "name": "key" }`, or `{ "scheme": "none" }` for a keyless local server. |
+| `headers`     | no              | Extra non-secret request headers (e.g. a routing hint). Credential header names are rejected.                             |
+| `query`       | no              | Extra static query parameters (e.g. Azure's `api-version`).                                                              |
+| `tools`       | no (default on) | Whether the endpoint supports tool calls. `false` skips the `read_file` round and proposes single-shot. If an endpoint ignores tools anyway, Patch says so and falls back automatically. |
+
+Secrets stay out of the file: `api_key_env` names a variable, `base_url` may not carry `user:pass@`, and `headers` may not name an authorization header. See [docs/model-providers.md](./docs/model-providers.md) for Azure/OpenRouter/vLLM recipes and the library-injection path.
 
 ## How it works
 
@@ -79,7 +109,7 @@ Also covers **Dependabot-style** npm version + security bumps via `dependency-up
 | `doc-scrape`        | HTML docs, no formal spec     | Lower — LLM bears more burden                  |
 
 Language scanners: **TypeScript/JavaScript** implemented; Python / Rust / Go stubs — [docs/languages.md](./docs/languages.md).  
-Fix-agent rules — [docs/rules.md](./docs/rules.md). Confidence ceilings — [docs/confidence.md](./docs/confidence.md).
+Fix-agent rules — [docs/rules.md](./docs/rules.md). Confidence ceilings — [docs/confidence.md](./docs/confidence.md). Custom model endpoints — [docs/model-providers.md](./docs/model-providers.md).
 
 ## Confidence
 

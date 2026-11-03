@@ -30,3 +30,5 @@ pnpm publish:cli
 ```
 
 Published `dependencies` are only third-party runtime libs (`commander`, `zod`, `ts-morph`, …). All `@patch-dev/*` code is inside `dist/bin.js`.
+
+Custom model endpoints add no runtime dependency: they reuse `openai` and `@anthropic-ai/sdk`, so `tsup.config.ts` `external` and the published `dependencies` are unchanged.

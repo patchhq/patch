@@ -191,6 +191,9 @@ importers:
 
   packages/core:
     dependencies:
+      '@patch-dev/model':
+        specifier: workspace:*
+        version: link:../model
       zod:
         specifier: ^3.24.1
         version: 3.25.76

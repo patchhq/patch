@@ -16,9 +16,11 @@ import {
   generateAndValidateFix,
   executeReadFile,
   createReadFileState,
+  providerProposeFix,
   type ProposeFixFn,
   type GeneratedFix,
 } from '../index.js';
+import type { ModelCompleteRequest, ModelProvider } from '@patch-dev/model';
 
 function makeEvent(overrides?: Partial<ChangeEvent>): ChangeEvent {
   return {
@@ -300,5 +302,210 @@ describe('read_file during propose', () => {
     expect(result.observability.fileReadPaths).toContain('src/helper.ts');
     expect(result.typecheckPassed).toBe(true);
     void readFileSync;
+  }, 60_000);
+});
+
+describe('providerProposeFix with tool support', () => {
+  it('round-trips one read_file tool call before proposing the fix', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'patch-tools-'));
+    try {
+      const site = scaffoldRepo(
+        dir,
+        `import { createCharge } from './types.js';\nexport async function run() {\n  return createCharge({ amount: 10 });\n}\n`,
+      );
+      const event = makeEvent();
+      const instruction = makeInstruction(event.id);
+      let calls = 0;
+      const provider: ModelProvider = {
+        id: 'tool-endpoint',
+        model: 'stub-model',
+        async complete(req) {
+          calls += 1;
+          const sawToolResult = req.messages.some(
+            (m) => Array.isArray(m.content) && m.content.some((p) => p.type === 'tool_result'),
+          );
+          if (!sawToolResult) {
+            return {
+              content: '',
+              toolCalls: [{ id: 'call-1', name: 'read_file', input: { path: 'src/helper.ts' } }],
+              raw: null,
+            };
+          }
+          return {
+            content: JSON.stringify({
+              before: 'return createCharge({ amount: 10 });',
+              after: "return createCharge({ amount: 10, currency: DEFAULT_CURRENCY });",
+              confidence: 0.9,
+              rationale: 'used the shared default currency',
+            }),
+            toolCalls: [],
+            raw: null,
+          };
+        },
+      };
+
+      const readState = createReadFileState();
+      const fix = await providerProposeFix(
+        { event, instruction, site, repoRoot: dir, rules: [], readState, maxFileReads: 3 },
+        provider,
+      );
+
+      expect(calls).toBe(2);
+      expect(fix.after).toContain('DEFAULT_CURRENCY');
+      expect(readState.reads).toBe(1);
+      expect(readState.paths).toEqual(['src/helper.ts']);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  }, 60_000);
+});
+
+describe('providerProposeFix when an endpoint ignores tools', () => {
+  it('notifies the operator, then retries single-shot before failing', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'patch-ignores-tools-'));
+    try {
+      const site = scaffoldRepo(
+        dir,
+        `import { createCharge } from './types.js';\nexport async function run() {\n  return createCharge({ amount: 10 });\n}\n`,
+      );
+      const event = makeEvent();
+      const instruction = makeInstruction(event.id);
+      const notices: string[] = [];
+      const requests: ModelCompleteRequest[] = [];
+      const provider: ModelProvider = {
+        id: 'gateway-without-tools',
+        model: 'stub-model',
+        // No `capabilities`: Patch assumes tool support and discovers the truth.
+        async complete(req) {
+          requests.push(req);
+          const singleShot = !req.tools;
+          if (singleShot) {
+            return {
+              content: JSON.stringify({
+                before: 'return createCharge({ amount: 10 });',
+                after: "return createCharge({ amount: 10, currency: 'usd' });",
+                confidence: 0.8,
+                rationale: 'single-shot after the gateway ignored tools',
+              }),
+              toolCalls: [],
+              raw: null,
+            };
+          }
+          return { content: 'I need more context.', toolCalls: [], raw: null };
+        },
+      };
+
+      const fix = await providerProposeFix(
+        {
+          event,
+          instruction,
+          site,
+          repoRoot: dir,
+          rules: [],
+          readState: createReadFileState(),
+          maxFileReads: 3,
+          notify: (message) => notices.push(message),
+        },
+        provider,
+      );
+
+      expect(notices.join('\n')).toMatch(/falling back to a single-shot fix/);
+      expect(fix.after).toContain("currency: 'usd'");
+      // The tool round happened first, the fallback carried no tool definitions.
+      expect(requests[0]!.tools).toBeDefined();
+      expect(requests[requests.length - 1]!.tools).toBeUndefined();
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  }, 60_000);
+});
+
+describe('providerProposeFix with a tool-less endpoint', () => {
+  const consumer = `import { createCharge } from './types.js';\nexport async function run() {\n  return createCharge({ amount: 10 });\n}\n`;
+
+  it('sends no tools and accepts a single-shot JSON fix', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'patch-notools-'));
+    try {
+      const site = scaffoldRepo(dir, consumer);
+      const event = makeEvent();
+      const instruction = makeInstruction(event.id);
+      const requests: ModelCompleteRequest[] = [];
+      const provider: ModelProvider = {
+        id: 'ollama',
+        model: 'llama3.2',
+        capabilities: { tools: false },
+        async complete(req) {
+          requests.push(req);
+          return {
+            content: JSON.stringify({
+              before: 'return createCharge({ amount: 10 });',
+              after: "return createCharge({ amount: 10, currency: 'usd' });",
+              confidence: 0.8,
+              rationale: 'single-shot fix',
+            }),
+            toolCalls: [],
+            raw: null,
+          };
+        },
+      };
+
+      const fix = await providerProposeFix(
+        {
+          event,
+          instruction,
+          site,
+          repoRoot: dir,
+          rules: [],
+          readState: createReadFileState(),
+          maxFileReads: 3,
+        },
+        provider,
+      );
+
+      expect(requests).toHaveLength(1);
+      expect(requests[0]!.tools).toBeUndefined();
+      expect(fix.after).toContain("currency: 'usd'");
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  }, 60_000);
+
+  it('names the tools switch instead of looping when no usable JSON comes back', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'patch-notools-bad-'));
+    try {
+      const site = scaffoldRepo(dir, consumer);
+      const event = makeEvent();
+      const instruction = makeInstruction(event.id);
+      const requests: ModelCompleteRequest[] = [];
+      const provider: ModelProvider = {
+        id: 'ollama',
+        model: 'llama3.2',
+        capabilities: { tools: false },
+        async complete(req) {
+          requests.push(req);
+          return { content: 'I cannot help with that.', toolCalls: [], raw: null };
+        },
+      };
+
+      await expect(
+        providerProposeFix(
+          {
+            event,
+            instruction,
+            site,
+            repoRoot: dir,
+            rules: [],
+            readState: createReadFileState(),
+            maxFileReads: 3,
+          },
+          provider,
+        ),
+      ).rejects.toThrow(/"tools": true/);
+
+      // One attempt plus one JSON-repair retry — never a tool-use loop.
+      expect(requests).toHaveLength(2);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   }, 60_000);
 });

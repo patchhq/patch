@@ -4,11 +4,7 @@ import { spawnSync } from 'node:child_process';
 import { Octokit } from '@octokit/rest';
 import type { ChangeEvent, PatchResult, SqliteSnapshotStore } from '@patch-dev/core';
 import type { ValidatedPatch } from '@patch-dev/fix';
-import {
-  describeMissingGithubAuth,
-  resolveGithubAuth,
-  type GithubAuthResult,
-} from './auth.js';
+import { describeMissingGithubAuth } from './auth.js';
 import { prepareAndPushFixBranch } from './push.js';
 
 export {

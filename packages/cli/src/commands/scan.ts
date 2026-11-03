@@ -10,8 +10,10 @@ import {
   type RawSource,
 } from '@patch-dev/core';
 import {
-  createModelProvider,
+  InvalidModelConfigError,
   MissingModelKeyError,
+  createModelProvider,
+  describeModel,
   type ModelProvider,
 } from '@patch-dev/model';
 import { createOpenApiDiffConnector } from '@patch-dev/connector-openapi-diff';
@@ -32,6 +34,11 @@ import { ensureScannersRegistered, scanWithLanguages } from '../scanners.js';
 export interface ScanOptions {
   cwd: string;
   dryRun: boolean;
+  /**
+   * In-process provider (library consumers, tests). When set, `patch.config.json`'s model
+   * section is not resolved and no API key is read.
+   */
+  provider?: ModelProvider;
 }
 
 function buildConnector(cfg: ConnectorConfig, cwd: string): Connector {
@@ -101,19 +108,21 @@ export async function runScan(options: ScanOptions): Promise<void> {
   const config = loadConfig(options.cwd);
 
   let provider: ModelProvider | undefined;
-  try {
-    provider = createModelProvider({ config: config.model });
-  } catch (err) {
-    if (err instanceof MissingModelKeyError) {
-      console.error(err.message);
-      process.exit(1);
+  if (options.provider) {
+    provider = options.provider;
+    console.log(`Model: ${provider.id} (${provider.model}) [injected]`);
+  } else {
+    try {
+      provider = createModelProvider({ config: config.model });
+    } catch (err) {
+      if (err instanceof MissingModelKeyError || err instanceof InvalidModelConfigError) {
+        console.error(err.message);
+        process.exit(1);
+      }
+      throw err;
     }
-    throw err;
+    console.log(`Model: ${describeModel(config.model)}`);
   }
-
-  console.log(
-    `Model: ${config.model.provider} (${config.model.model}) via $${config.model.api_key_env}`,
-  );
 
   const store = new SqliteSnapshotStore(resolve(options.cwd, config.snapshot_db));
   const connectors = activeConnectors(config);

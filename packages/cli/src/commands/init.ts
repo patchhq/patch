@@ -8,13 +8,17 @@ import {
   languageDisplayName,
   writeDefaultRulesFile,
   type ConnectorConfig,
-  type ModelConfig,
   type PatchConfig,
 } from '@patch-dev/core';
 import {
+  BUILTIN_PROVIDERS,
+  ModelConfigSchema,
+  describeModel,
   keySignupUrl,
   readApiKeyFromEnv,
-  type ModelProviderId,
+  resolveModelConfig,
+  serializeModelConfig,
+  type ModelConfig,
 } from '@patch-dev/model';
 import { readGithubAppInstallUrl } from '@patch-dev/github-app';
 
@@ -33,10 +37,14 @@ function readPackageDeps(cwd: string): Record<string, string> {
   return { ...pkg.dependencies, ...pkg.devDependencies };
 }
 
-function scaffoldWorkflow(cwd: string, apiKeyEnv: string): string {
+function scaffoldWorkflow(cwd: string, apiKeyEnv?: string): string {
   const dir = join(cwd, '.github', 'workflows');
   mkdirSync(dir, { recursive: true });
   const path = join(dir, 'patch.yml');
+  // Keyless endpoints need no secret, so the env line and its secret are omitted entirely.
+  const modelEnvLine = apiKeyEnv
+    ? `          ${apiKeyEnv}: \${{ secrets.${apiKeyEnv} }}\n`
+    : '';
   const content = `# Patch: scheduled upstream API change scan
 name: patch
 
@@ -68,8 +76,7 @@ jobs:
       - run: npm install -g @patch-dev/cli@latest
       - name: Run patch scan
         env:
-          ${apiKeyEnv}: \${{ secrets.${apiKeyEnv} }}
-          # Prefer App token when the previous step succeeded; else workflow GITHUB_TOKEN
+${modelEnvLine}          # Prefer App token when the previous step succeeded; else workflow GITHUB_TOKEN
           GITHUB_TOKEN: \${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
         run: patch scan
 `;
@@ -89,52 +96,87 @@ async function confirm(message: string, yesFlag: boolean): Promise<boolean> {
   }
 }
 
-function resolveModelChoice(provider: ModelProviderId): ModelConfig {
-  if (provider === 'openai') {
-    return {
-      provider: 'openai',
-      api_key_env: 'OPENAI_API_KEY',
-      model: 'gpt-4o',
-    };
-  }
-  return {
-    provider: 'anthropic',
-    api_key_env: 'ANTHROPIC_API_KEY',
-    model: 'claude-sonnet-4-20250514',
-  };
-}
-
-async function chooseProvider(yesFlag: boolean): Promise<ModelProviderId> {
+/**
+ * Interactive provider choice.
+ *
+ * Built-in entries come from `BUILTIN_PROVIDERS`, so a new built-in is one row, not a new
+ * prompt branch. The last two entries are the custom-endpoint escape hatch; they are reachable
+ * only from a TTY, which keeps `--yes` and CI runs byte-identical to before.
+ */
+async function chooseModelConfig(yesFlag: boolean): Promise<ModelConfig> {
   if (yesFlag || !process.stdin.isTTY) {
-    return 'anthropic';
+    return ModelConfigSchema.parse({});
   }
+
   const rl = createInterface({ input, output });
   try {
     console.log('Which LLM provider should Patch use for classify + fix?');
-    console.log('  1) Anthropic (Claude) — env ANTHROPIC_API_KEY');
-    console.log('  2) OpenAI (GPT / Codex-style) — env OPENAI_API_KEY');
-    const answer = await rl.question('Provider [1/2] (default 1): ');
-    const trimmed = answer.trim();
-    if (trimmed === '2' || /^openai$/i.test(trimmed)) return 'openai';
-    return 'anthropic';
+    BUILTIN_PROVIDERS.forEach((p, i) => {
+      console.log(`  ${i + 1}) ${p.label} — env ${p.defaultApiKeyEnv}`);
+    });
+    const openaiOption = BUILTIN_PROVIDERS.length + 1;
+    const anthropicOption = BUILTIN_PROVIDERS.length + 2;
+    console.log(
+      `  ${openaiOption}) Custom — OpenAI-compatible endpoint (gateway, Azure, Ollama, vLLM, proxy)`,
+    );
+    console.log(`  ${anthropicOption}) Custom — Anthropic-compatible endpoint`);
+
+    const answer = (
+      await rl.question(`Provider [1-${anthropicOption}] (default 1): `)
+    ).trim();
+    const choice = Number(answer || '1');
+
+    const builtin = BUILTIN_PROVIDERS[choice - 1];
+    if (builtin && choice >= 1) {
+      return ModelConfigSchema.parse({ provider: builtin.id });
+    }
+    if (choice !== openaiOption && choice !== anthropicOption) {
+      throw new Error(`Invalid provider choice: ${answer}. Run \`patch init\` again.`);
+    }
+
+    const dialect = choice === openaiOption ? 'openai' : 'anthropic';
+    const baseUrl = (
+      await rl.question('Base URL (e.g. https://gateway.internal/v1): ')
+    ).trim();
+    const modelId = (await rl.question('Model id: ')).trim();
+    const apiKeyEnv = (
+      await rl.question('Env var holding the API key (blank = no key needed): ')
+    ).trim();
+    const providerId = (
+      await rl.question(`Provider id, used in logs [custom-${dialect}]: `)
+    ).trim();
+
+    return ModelConfigSchema.parse({
+      provider: providerId || `custom-${dialect}`,
+      dialect,
+      base_url: baseUrl,
+      model: modelId,
+      ...(apiKeyEnv ? { api_key_env: apiKeyEnv } : { auth: { scheme: 'none' } }),
+    });
   } finally {
     rl.close();
   }
 }
 
 function printKeySetup(model: ModelConfig): void {
-  const { provider, api_key_env } = model;
-  if (readApiKeyFromEnv(api_key_env)) {
-    console.log(`Found $${api_key_env} in the environment.`);
+  const resolved = resolveModelConfig(model);
+  if (!resolved.apiKeyEnv) {
+    console.log('\nThis endpoint takes no API key — nothing to set.');
+    return;
+  }
+  const { provider, apiKeyEnv } = resolved;
+  if (readApiKeyFromEnv(apiKeyEnv)) {
+    console.log(`Found $${apiKeyEnv} in the environment.`);
     return;
   }
   console.log();
-  console.log(`${api_key_env} is not set.`);
-  console.log(`Set it before running \`patch scan\`:`);
-  console.log(`  export ${api_key_env}=your-key-here`);
-  console.log(`Get a key at ${keySignupUrl(provider)}`);
+  console.log(`${apiKeyEnv} is not set.`);
+  console.log('Set it before running `patch scan`:');
+  console.log(`  export ${apiKeyEnv}=your-key-here`);
+  const signup = keySignupUrl(provider);
+  if (signup) console.log(`Get a key at ${signup}`);
   console.log(
-    `(Never put the key in patch.config.json — only provider + api_key_env belong there.)`,
+    '(Never put the key in patch.config.json — only the env var name belongs there.)',
   );
 }
 
@@ -184,8 +226,7 @@ export async function runInit(options: InitOptions): Promise<void> {
     return;
   }
 
-  const provider = await chooseProvider(options.yes);
-  const model = resolveModelChoice(provider);
+  const model = await chooseModelConfig(options.yes);
 
   const connectors: ConnectorConfig[] = matches.map((m) => ({
     id: m.connectorId,
@@ -236,22 +277,16 @@ export async function runInit(options: InitOptions): Promise<void> {
           ],
   };
 
-  // Persist provider choice + env var name only (never the key value).
+  // Persist the model section as written intent: no derived keys, no secrets.
   const configForDisk = {
     ...config,
-    model: {
-      provider: model.provider,
-      api_key_env: model.api_key_env,
-      ...(model.model ? { model: model.model } : {}),
-    },
+    model: serializeModelConfig(model),
   };
 
   const configPath = join(options.cwd, 'patch.config.json');
   writeFileSync(configPath, `${JSON.stringify(configForDisk, null, 2)}\n`, 'utf8');
   console.log(`Wrote ${configPath}`);
-  console.log(
-    `Model provider: ${model.provider} (key from $${model.api_key_env})`,
-  );
+  console.log(`Model provider: ${describeModel(model)}`);
   printKeySetup(model);
 
   mkdirSync(join(options.cwd, '.patch'), { recursive: true });
@@ -265,17 +300,20 @@ export async function runInit(options: InitOptions): Promise<void> {
     }
   }
 
-  const workflow = scaffoldWorkflow(options.cwd, model.api_key_env);
+  const workflow = scaffoldWorkflow(options.cwd, resolveModelConfig(model).apiKeyEnv);
   console.log(`Scaffolded ${workflow}`);
 
   const installUrl = readGithubAppInstallUrl();
+  const secrets = [
+    resolveModelConfig(model).apiKeyEnv,
+    'PATCH_GITHUB_APP_ID',
+    'PATCH_GITHUB_APP_PRIVATE_KEY',
+  ].filter((s): s is string => Boolean(s));
   console.log();
   console.log('Next steps:');
   console.log(`  1. Install the Patch GitHub App on this repo: ${installUrl}`);
   console.log('     (create the App once — see docs/github-app.md)');
-  console.log(
-    `  2. Add secrets: ${model.api_key_env}, PATCH_GITHUB_APP_ID, PATCH_GITHUB_APP_PRIVATE_KEY`,
-  );
+  console.log(`  2. Add secrets: ${secrets.join(', ')}`);
   console.log('  3. Wait for the scheduled Action or run:');
   console.log('       npx patch scan');
 }

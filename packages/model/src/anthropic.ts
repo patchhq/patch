@@ -1,10 +1,13 @@
 import Anthropic from '@anthropic-ai/sdk';
+import { SDK_PLACEHOLDER_KEY, withEndpoint } from './endpoint.js';
 import type {
+  ModelCapabilities,
   ModelCompleteRequest,
   ModelCompleteResult,
   ModelContentPart,
   ModelMessage,
   ModelProvider,
+  ModelProviderId,
   ModelToolCall,
 } from './types.js';
 
@@ -65,22 +68,55 @@ function systemFrom(request: ModelCompleteRequest): string | undefined {
         .join('\n');
 }
 
+export interface AnthropicProviderOptions {
+  model: string;
+  /** Provider id for logs; defaults to 'anthropic'. */
+  id?: ModelProviderId;
+  /** Endpoint override — a proxy, a gateway, or a local Anthropic-compatible server. */
+  baseUrl?: string;
+  /** Final header set (auth included). Applied by the endpoint wrapper, not the SDK. */
+  headers?: Readonly<Record<string, string>>;
+  /** Final query parameters (auth included). */
+  query?: Readonly<Record<string, string>>;
+  /** May tool definitions be sent? Default true. */
+  tools?: boolean;
+  /** Test seam: an injected client owns its own transport and auth. */
+  client?: Anthropic;
+}
+
 export class AnthropicProvider implements ModelProvider {
-  readonly id = 'anthropic' as const;
+  readonly id: ModelProviderId;
   readonly model: string;
+  readonly capabilities: ModelCapabilities;
   private readonly client: Anthropic;
 
-  constructor(options: { apiKey: string; model: string; client?: Anthropic }) {
+  constructor(options: AnthropicProviderOptions) {
+    this.id = options.id ?? 'anthropic';
     this.model = options.model;
-    this.client = options.client ?? new Anthropic({ apiKey: options.apiKey });
+    this.capabilities = { tools: options.tools ?? true };
+    this.client =
+      options.client ??
+      new Anthropic({
+        // The endpoint wrapper owns the real auth headers; the SDK only needs a non-empty
+        // string so it will construct.
+        apiKey: SDK_PLACEHOLDER_KEY,
+        ...(options.baseUrl ? { baseURL: options.baseUrl } : {}),
+        fetch: withEndpoint({
+          headers: options.headers ?? {},
+          query: options.query ?? {},
+        }),
+      });
   }
 
   async complete(request: ModelCompleteRequest): Promise<ModelCompleteResult> {
-    const tools = request.tools?.map((t) => ({
-      name: t.name,
-      description: t.description,
-      input_schema: t.input_schema as Anthropic.Tool['input_schema'],
-    }));
+    const tools =
+      this.capabilities.tools === false
+        ? undefined
+        : request.tools?.map((t) => ({
+            name: t.name,
+            description: t.description,
+            input_schema: t.input_schema as Anthropic.Tool['input_schema'],
+          }));
 
     const response = await this.client.messages.create({
       model: this.model,

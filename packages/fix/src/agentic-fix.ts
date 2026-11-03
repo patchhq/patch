@@ -2,7 +2,6 @@ import { mkdirSync, readFileSync, writeFileSync, cpSync, rmSync, existsSync, sym
 import { join, dirname } from 'node:path';
 import { tmpdir } from 'node:os';
 import { spawnSync } from 'node:child_process';
-import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import {
   MAX_FILE_READS_PER_ATTEMPT,
@@ -81,6 +80,8 @@ export interface ProposeFixContext {
   /** Mutable read_file budget for this attempt. */
   readState: ReadFileToolState;
   maxFileReads: number;
+  /** Operator-facing notice sink (defaults to console). */
+  notify?: (message: string, data?: Record<string, unknown>) => void;
 }
 
 /**
@@ -150,7 +151,11 @@ function applyConfidenceCeiling(
   return Math.min(modelConfidence, CONFIDENCE_CEILINGS.typecheckFailed);
 }
 
-function buildProposePrompt(ctx: ProposeFixContext, fileContent: string): string {
+function buildProposePrompt(
+  ctx: ProposeFixContext,
+  fileContent: string,
+  toolsAvailable = true,
+): string {
   const rulesBlock = formatRulesForPrompt(ctx.rules);
   const revision = ctx.previous
     ? `
@@ -199,7 +204,7 @@ Full file (${ctx.site.file}):
 ${fileContent}
 \`\`\`
 ${revision}
-You may call the read_file tool (max ${ctx.maxFileReads} times this attempt) to inspect sibling files.
+${toolsAvailable ? `You may call the read_file tool (max ${ctx.maxFileReads} times this attempt) to inspect sibling files.` : 'This endpoint takes no tool calls: work from the file contents above alone.'}
 
 When ready, respond with ONLY JSON (no markdown fence required):
 {
@@ -218,9 +223,23 @@ export async function providerProposeFix(
   provider: ModelProvider,
 ): Promise<GeneratedFix> {
   const fileContent = readFileSync(join(ctx.repoRoot, ctx.site.file), 'utf8');
+  const toolsAvailable = provider.capabilities?.tools !== false;
   const messages: ModelMessage[] = [
-    { role: 'user', content: buildProposePrompt(ctx, fileContent) },
+    { role: 'user', content: buildProposePrompt(ctx, fileContent, toolsAvailable) },
   ];
+
+  const notify =
+    ctx.notify ?? ((message: string, data?: Record<string, unknown>) => defaultLog(message, data));
+  const toolsDeclined = provider.capabilities?.tools === false;
+  if (toolsDeclined) {
+    notify(
+      'model provider is configured without tool support — proposing a single-shot fix',
+      { provider: provider.id, model: provider.model },
+    );
+    return proposeWithoutTools(ctx, provider, messages);
+  }
+
+  let sawToolCall = false;
 
   for (let round = 0; round < ctx.maxFileReads + 2; round++) {
     const response = await provider.complete({
@@ -277,38 +296,102 @@ export async function providerProposeFix(
         });
       }
       messages.push({ role: 'user', content: toolResultParts });
+      sawToolCall = true;
       continue;
     }
 
-    const text = response.content;
-    let lastErr: string | undefined;
-    for (let parseAttempt = 0; parseAttempt < 2; parseAttempt++) {
-      try {
-        return GeneratedFixSchema.parse(extractJson(text));
-      } catch (err) {
-        lastErr = err instanceof Error ? err.message : String(err);
-        if (parseAttempt === 0) {
-          messages.push({ role: 'assistant', content: text });
-          messages.push({
-            role: 'user',
-            content: `JSON validation failed: ${lastErr}\nRespond with corrected JSON only.`,
-          });
-          const retry = await provider.complete({
-            maxTokens: 2048,
-            messages,
-          });
-          try {
-            return GeneratedFixSchema.parse(extractJson(retry.content));
-          } catch (err2) {
-            lastErr = err2 instanceof Error ? err2.message : String(err2);
-          }
-        }
+    // No tool call this round: the endpoint either answered directly, or ignores tools.
+    const direct = tryParseFix(response.content);
+    if (direct) {
+      if (!sawToolCall) {
+        notify(
+          'model provider answered without using tools — accepting the direct fix',
+          { provider: provider.id, model: provider.model },
+        );
       }
+      return direct;
     }
-    throw new Error(`Model did not return valid fix JSON: ${lastErr}`);
+
+    if (!sawToolCall) {
+      // Never played the tool game: retrying the tool conversation cannot help.
+      break;
+    }
+
+    // It used tools earlier, so ask once more for the JSON the prompt asked for.
+    messages.push({ role: 'assistant', content: response.content });
+    messages.push({
+      role: 'user',
+      content:
+        'JSON validation failed: the response was not the required JSON object. ' +
+        'Respond with corrected JSON only.',
+    });
+    const retry = await provider.complete({ maxTokens: 2048, messages });
+    const repaired = tryParseFix(retry.content);
+    if (repaired) return repaired;
+    throw new Error(
+      `Model provider "${provider.id}" (${provider.model}) used tools but never returned a ` +
+        `valid fix for ${ctx.site.file}:${ctx.site.line}.`,
+    );
   }
 
-  throw new Error('Exceeded tool-use rounds without a final patch.');
+  notify(
+    'model provider returned no read_file tool calls — falling back to a single-shot fix; ' +
+      'set "tools": false under "model" in patch.config.json to skip the tool loop next time',
+    { provider: provider.id, model: provider.model },
+  );
+
+  // Rebuild the conversation: a tool-less request must not carry tool_use/tool_result parts.
+  const singleShot: ModelMessage[] = [
+    { role: 'user', content: buildProposePrompt(ctx, fileContent, false) },
+  ];
+  return proposeWithoutTools(
+    ctx,
+    provider,
+    singleShot,
+    `Model provider "${provider.id}" (${provider.model}) returned no tool calls and no usable ` +
+      `single-shot fix for ${ctx.site.file}:${ctx.site.line}. Set "tools": false under "model" in ` +
+      'patch.config.json so Patch stops sending tool definitions to this endpoint.',
+  );
+}
+
+/**
+ * Single-shot proposal for an endpoint that cannot take tool calls.
+ * One attempt, one JSON-repair retry, then a message that names the switch to change.
+ */
+async function proposeWithoutTools(
+  ctx: ProposeFixContext,
+  provider: ModelProvider,
+  messages: ModelMessage[],
+  failureMessage?: string,
+): Promise<GeneratedFix> {
+  const first = await provider.complete({ maxTokens: 4096, messages });
+  const parsed = tryParseFix(first.content);
+  if (parsed) return parsed;
+
+  messages.push({ role: 'assistant', content: first.content });
+  messages.push({
+    role: 'user',
+    content: 'Respond with ONLY the JSON object described above — no prose, no markdown fence.',
+  });
+  const retry = await provider.complete({ maxTokens: 2048, messages });
+  const repaired = tryParseFix(retry.content);
+  if (repaired) return repaired;
+
+  throw new Error(
+    failureMessage ??
+      `Model provider "${provider.id}" (${provider.model}) takes no tool calls and did not return ` +
+        `a usable fix for ${ctx.site.file}:${ctx.site.line}. Set "tools": true under "model" in ` +
+        'patch.config.json if this endpoint supports function calling, or point it at a model that ' +
+        'returns the requested JSON.',
+  );
+}
+
+function tryParseFix(text: string): GeneratedFix | undefined {
+  try {
+    return GeneratedFixSchema.parse(extractJson(text));
+  } catch {
+    return undefined;
+  }
 }
 
 /** @deprecated Use providerProposeFix — kept as alias for older imports. */
@@ -564,6 +647,7 @@ export async function generateAndValidateFix(
       previous,
       readState,
       maxFileReads,
+      notify: (message, data) => log(message, data),
     });
     lastGenerated = generated;
 

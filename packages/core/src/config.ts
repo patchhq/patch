@@ -1,7 +1,12 @@
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { z } from 'zod';
+import { ModelConfigSchema } from '@patch-dev/model';
 import { PatchRuleSchema } from './rules.js';
+
+/** Re-exported for callers that used to get it from core; the definitions live in @patch-dev/model. */
+export type { ModelConfig } from '@patch-dev/model';
+export { ModelConfigSchema };
 
 export const LanguageConfigSchema = z.enum([
   'typescript',
@@ -26,27 +31,6 @@ export const ConnectorConfigSchema = z.object({
 });
 export type ConnectorConfig = z.infer<typeof ConnectorConfigSchema>;
 
-/**
- * LLM provider selection. Stores provider + env var *name* only — never the key.
- */
-export const ModelConfigSchema = z
-  .object({
-    provider: z.enum(['anthropic', 'openai']).default('anthropic'),
-    api_key_env: z.string().min(1).optional(),
-    model: z.string().min(1).optional(),
-  })
-  .default({})
-  .transform((raw) => {
-    const provider = raw.provider ?? 'anthropic';
-    const api_key_env =
-      raw.api_key_env ??
-      (provider === 'openai' ? 'OPENAI_API_KEY' : 'ANTHROPIC_API_KEY');
-    const model =
-      raw.model ??
-      (provider === 'openai' ? 'gpt-4o' : 'claude-sonnet-4-20250514');
-    return { provider, api_key_env, model } as const;
-  });
-export type ModelConfig = z.infer<typeof ModelConfigSchema>;
 
 export const PatchConfigSchema = z.object({
   version: z.literal(1).default(1),
@@ -80,7 +64,19 @@ export function loadConfig(cwd: string = process.cwd()): PatchConfig {
     );
   }
   const raw = JSON.parse(readFileSync(path, 'utf8')) as unknown;
-  return PatchConfigSchema.parse(raw);
+  const result = PatchConfigSchema.safeParse(raw);
+  if (!result.success) {
+    // A raw ZodError prints a JSON dump; name the field and the problem instead.
+    const problems = result.error.issues
+      .map((issue) =>
+        issue.path.length > 0
+          ? `  - ${issue.path.join('.')}: ${issue.message}`
+          : `  - ${issue.message}`,
+      )
+      .join('\n');
+    throw new Error(`Invalid patch.config.json:\n${problems}`);
+  }
+  return result.data;
 }
 
 export function activeConnectors(config: PatchConfig): ConnectorConfig[] {

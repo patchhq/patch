@@ -34,7 +34,7 @@ Patch opens **PRs** (confidence ≥ threshold) or **Issues** (below threshold) u
 | `PATCH_GITHUB_APP_INSTALLATION_ID` | Optional | Skip auto lookup of installation for `owner/repo` |
 | `PATCH_GITHUB_APP_INSTALL_URL` | Optional | Shown by `patch init` (default `https://github.com/apps/patchhq/installations/new`) |
 | `GITHUB_TOKEN` | Optional override | PAT / Actions token — used **instead of** the App when set |
-| `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` | Required | LLM classify/fix (matches `model.provider`) |
+| `<model.api_key_env>` | Required unless the endpoint is keyless | LLM classify/fix. Defaults to `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` for built-in providers; see [model-providers.md](./model-providers.md) |
 
 Aliases also accepted: `GITHUB_APP_ID`, `GITHUB_APP_PRIVATE_KEY`, `GITHUB_APP_INSTALLATION_ID`.
 
@@ -48,7 +48,7 @@ Aliases also accepted: `GITHUB_APP_ID`, `GITHUB_APP_PRIVATE_KEY`, `GITHUB_APP_IN
 
 Repo secrets to add:
 
-- `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` (whichever `patch.config.json` → `model` uses)
+- the env var named by `patch.config.json` → `model.api_key_env` (a built-in provider defaults it; a keyless custom endpoint needs none)
 - `PATCH_GITHUB_APP_ID`
 - `PATCH_GITHUB_APP_PRIVATE_KEY`
 
